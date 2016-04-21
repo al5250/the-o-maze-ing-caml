@@ -93,6 +93,18 @@ module Maze (C : CELL) : (MAZE with type cell = C.c) =
 		(* Initializes an empty maze of size n at (0, 0) *)
 		let initialize (n : int) : maze = [C.generate (0, 0) n]
 
+
+		let modify (cell1 : cell) (cell2 : cell) (left_space : bool) : unit =
+			match Random.int 2 with
+			| 0 -> 
+				if left_space
+				then C.toggle_left cell1
+				else C.toggle_bottom cell1
+			| 1 -> 
+				if left_space
+				then C.toggle_left cell2
+				else C.toggle_bottom cell2
+			
 		(* Divides a cell into 4 cells and returns a maze containing the cells *)
 		let divide (c : cell) : maze =
 			let (x, y) = C.get_pos c in
@@ -104,17 +116,6 @@ module Maze (C : CELL) : (MAZE with type cell = C.c) =
 				let c2 = C.generate (x, y + new_length) new_length in
 				let c3 = C.generate (x + new_length, y + new_length) new_length in 
 				let c4 = C.generate (x + new_length, y) new_length in 
-				let modify (cell1 : cell) (cell2 : cell) (left_space : bool) : unit =
-					match Random.int 2 with
-					| 0 -> 
-						if left_space
-						then C.toggle_left cell1
-						else C.toggle_bottom cell1
-					| 1 -> 
-						if left_space
-						then C.toggle_left cell2
-						else C.toggle_bottom cell2
-				in
 				if C.get_left c
 				then modify c1 c2 true;
 				if C.get_bottom c
