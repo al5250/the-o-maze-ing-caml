@@ -137,8 +137,7 @@ module Maze (C : CELL) : (MAZE with type cell = C.c) =
 	end
 
 (* Make a square maze with square cells *)
-module SquareMaze = (Maze(SquareCell) :
-                         MAZE with type cell = SquareCell.c)
+module SquareMaze = (Maze(SquareCell) : MAZE with type cell = SquareCell.c)
 
 
 

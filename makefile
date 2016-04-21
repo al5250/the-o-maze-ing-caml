@@ -1,6 +1,6 @@
 all: main
 
-moogle: main.ml
+main: main.ml
 	ocamlbuild main.byte
 
 clean:
