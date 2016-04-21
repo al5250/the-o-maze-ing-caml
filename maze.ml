@@ -1,5 +1,5 @@
 (**********************************************************************
- * CS51 Final Project, 2016
+ * CS51 Final Project, Spring 2016
  * Maze Generation, Drawing, and Solving
  * Melissa Yu, Alex Lin
  *)
@@ -110,7 +110,7 @@ module type MAZE =
     type maze
     val to_string : maze -> string
 
-  (* Generate a maze of size int *)
+  (* Generate a maze of size n, where n is a power of 2 *)
     val generate : int -> maze
 
   (* Draw a maze *)
