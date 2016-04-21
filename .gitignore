@@ -1,0 +1,8 @@
+# ocamlbuild working directory
+_build/
+
+# ocamlbuild targets
+*.byte
+*.native
+
+.DS_Store

@@ -1,27 +1,36 @@
 module type MAZE = 
-sig
+	sig
 		type cell
 		type maze
 		val generate : int -> maze
-(* 		val draw : maze -> unit
+		(* 		val draw : maze -> unit
 		val solve : maze -> unit *)
-end ;;
+	end
 
 module Maze : MAZE = 
-struct
+	struct
+		type cell = {
+			pos : int*int;
+			length : int;
+			left : bool;
+			bottom : bool;
+			(* (top, right, bottom, left) *)
+			neighbors : (cell ref * cell ref * cell ref * cell ref) 
+		}
 
-	type cell = {
-		pos : int;
-		length : int;
-		left : bool;
-		bottom : bool;
-		neighbors : int ref * int ref * int ref * int ref (* (top, right, bottom, left) *)
-	}
+		type maze = cell list
 
-	type maze = cell list
 
-	let initialize (n : int) : maze = 
-	[] 
+		let initialize (n : int) : maze = 
+			let c = {
+				pos = (0,0);
+				length = n;
+				left = false;
+				bottom = false;
+				neighbors = None
+			} 
+			in [c] 
 
-end
+
+	end
 
