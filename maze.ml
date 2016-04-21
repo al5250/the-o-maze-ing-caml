@@ -27,7 +27,6 @@ module type CELL =
     val get_len: c -> int
     val get_left: c -> bool
     val get_bottom: c -> bool
-
   end
 
 module SquareCell =
@@ -44,7 +43,7 @@ module SquareCell =
     	let tmp = String.concat ", " 
     		["(" ^ string_of_int x ^ ", " ^ string_of_int y ^ ")"; string_of_int c.length; 
     			string_of_bool c.left; string_of_bool c.bottom]
-    	in "[" ^ tmp ^ "]"
+    	in "{" ^ tmp ^ "}"
 
     let generate pos length =
     	{ pos;
@@ -55,6 +54,7 @@ module SquareCell =
 
     let toggle_left c =
     	c.left <- not c.left
+
     let toggle_bottom c =
     	c.bottom <- not c.bottom
 
@@ -62,7 +62,6 @@ module SquareCell =
     let get_len c = c.length
     let get_left c = c.left
     let get_bottom c = c.bottom
-
   end
 
 (* ====================================================================
@@ -90,57 +89,54 @@ module Maze (C : CELL) : (MAZE with type cell = C.c) =
 		type cell = C.c
 		type maze = cell list
 
+		let to_string m = 
+    	List.fold_left (fun a e -> a ^ (C.to_string e)) "" m
+
 		(* Initializes an empty maze of size n at (0, 0) *)
 		let initialize (n : int) : maze = [C.generate (0, 0) n]
 
-
+		(* Helper function for divide *)
 		let modify (cell1 : cell) (cell2 : cell) (left_space : bool) : unit =
 			match Random.int 2 with
 			| 0 -> 
-				if left_space
-				then C.toggle_left cell1
+				if left_space then C.toggle_left cell1
 				else C.toggle_bottom cell1
 			| 1 -> 
-				if left_space
-				then C.toggle_left cell2
+				if left_space then C.toggle_left cell2
 				else C.toggle_bottom cell2
 			
 		(* Divides a cell into 4 cells and returns a maze containing the cells *)
 		let divide (c : cell) : maze =
 			let (x, y) = C.get_pos c in
-			let new_length = (C.get_len c) / 2 in
-			if new_length = 0
-			then [c]
+			let dl = (C.get_len c) / 2 in
+			if dl = 0 then [c]
 			else
-				let c1 = C.generate (x, y) new_length in
-				let c2 = C.generate (x, y + new_length) new_length in
-				let c3 = C.generate (x + new_length, y + new_length) new_length in 
-				let c4 = C.generate (x + new_length, y) new_length in 
-				if C.get_left c
-				then modify c1 c2 true;
-				if C.get_bottom c
-				then modify c1 c4 false;
+				let c1 = C.generate (x, y) dl in
+				let c2 = C.generate (x, y + dl) dl in
+				let c3 = C.generate (x + dl, y + dl) dl in 
+				let c4 = C.generate (x + dl, y) dl in 
+				if C.get_left c then modify c1 c2 true;
+				if C.get_bottom c then modify c1 c4 false;
 				match Random.int 4 with
-					| 0 -> C.toggle_left c3; C.toggle_bottom c3; C.toggle_left c4; [c1; c2; c3; c4]
-					| 1 -> C.toggle_bottom c2; C.toggle_bottom c3; C.toggle_left c4; [c1; c2; c3; c4]
-					| 2 -> C.toggle_bottom c2; C.toggle_left c3; C.toggle_left c4; [c1; c2; c3; c4]
-					| 3 -> C.toggle_bottom c2; C.toggle_left c3; C.toggle_bottom c3; [c1; c2; c3; c4]
+				| 0 -> C.toggle_left c3; C.toggle_bottom c3; C.toggle_left c4; [c1; c2; c3; c4]
+				| 1 -> C.toggle_bottom c2; C.toggle_bottom c3; C.toggle_left c4; [c1; c2; c3; c4]
+				| 2 -> C.toggle_bottom c2; C.toggle_left c3; C.toggle_left c4; [c1; c2; c3; c4]
+				| 3 -> C.toggle_bottom c2; C.toggle_left c3; C.toggle_bottom c3; [c1; c2; c3; c4]
 
-		let rec generate' (m : maze) : maze = 
-			if C.get_len (List.hd m) = 1
-			then m
-			else generate' (List.fold_left (fun a e -> a @ (divide e)) [] m)
-
-		let generate n = generate' (initialize n)
-
-    let to_string (m : maze) : string = 
-    	List.fold_left (fun a e -> a ^ (C.to_string e)) "" m
+		let generate n = 
+			let rec generate' (m : maze) : maze = 
+				let hd::tl = m in
+				if C.get_len hd = 1 then m
+				else generate' (List.fold_left (fun a e -> a @ (divide e)) [] m)
+			in
+			generate' (initialize n)
 
 		let draw m = ()
 
 		let solve m = ()
 	end
 
+(* Make a square maze with square cells *)
 module SquareMaze = (Maze(SquareCell) :
                          MAZE with type cell = SquareCell.c)
 
