@@ -1,7 +1,7 @@
-all: moogle
+all: main
 
-moogle: moogle.ml
-	ocamlbuild moogle.byte
+moogle: main.ml
+	ocamlbuild main.byte
 
 clean:
 	rm -rf _build *.byte
