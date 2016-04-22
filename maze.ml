@@ -122,9 +122,6 @@ module type MAZE =
     (* Generate a maze of size n, where n is a power of 2 *)
     val generate : int -> maze
 
-    (* Draw a maze *)
-    val draw : maze -> unit
-
     (* Solve a maze graphically *)
     val solve : maze -> unit
   end
@@ -136,22 +133,6 @@ module Maze (C : CELL) : (MAZE with type cell = C.c) =
 
     let to_string m = 
       List.fold_left (fun a e -> a ^ (C.to_string e)) "" m
-
-    (* ##### GENERATE ##### *)
-
-    (* initializes an empty maze of size n at (0, 0) *)
-    let initialize (n : int) : maze = [C.generate (0, 0) n]
-
-    let generate n = 
-      let rec generate' (m : maze) : maze = 
-        match m with
-        | [] -> failwith "Invalid maze"
-        | hd::tl ->
-          let dims = C.get_dim hd in
-          if fst dims = 1 || snd dims = 1 then m
-          else generate' (List.fold_left (fun a e -> List.append (C.divide e) a) [] m)
-      in
-      generate' (initialize n)
 
     (* ##### DRAW ##### *)
 
@@ -179,14 +160,14 @@ module Maze (C : CELL) : (MAZE with type cell = C.c) =
       List.iter (draw_cell n) m;
       (* color 2 walls red on border for start and end points *)
       set_color red;
-      set_line_width 3;
+      set_line_width 4;
       moveto margin margin;
       lineto (margin + scale) margin;
       moveto (margin + maze_size - scale) (margin + maze_size) ;
       lineto (margin + maze_size) (margin + maze_size);
       moveto margin (margin - 15);
       draw_string "Start Here";
-      moveto (margin + maze_size - scale) (margin + maze_size + 15);
+      moveto (margin + maze_size - scale) (margin + maze_size + 4);
       draw_string "End Here"
 
     (* do the entire process *)
@@ -194,6 +175,24 @@ module Maze (C : CELL) : (MAZE with type cell = C.c) =
       close_graph ();
       display_screen ();
       draw_maze m
+
+    (* ##### GENERATE ##### *)
+
+    (* initializes an empty maze of size n at (0, 0) *)
+    let initialize (n : int) : maze = [C.generate (0, 0) n]
+
+    let generate n = 
+      let rec generate' (m : maze) : maze = 
+        match m with
+        | [] -> failwith "Invalid maze"
+        | hd::tl ->
+          let dims = C.get_dim hd in
+          if fst dims = 1 || snd dims = 1 then m
+          else generate' (List.fold_left (fun a e -> List.append (C.divide e) a) [] m)
+      in
+      let new_maze = generate' (initialize n) in
+        draw new_maze;
+        new_maze
 
     (* ##### SOLVE ##### *)
       
