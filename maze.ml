@@ -12,6 +12,11 @@ open Graphics
 
 #load "graphics.cma";;
 
+(* ##### GLOBAL VARIABLES ##### *)
+let window_size = 612
+let margin = 50
+let maze_size = window_size - 2 * margin
+
 module type CELL =
   sig
     type c 
@@ -114,13 +119,13 @@ module type MAZE =
     type maze
     val to_string : maze -> string
 
-  (* Generate a maze of size n, where n is a power of 2 *)
+    (* Generate a maze of size n, where n is a power of 2 *)
     val generate : int -> maze
 
-  (* Draw a maze *)
+    (* Draw a maze *)
     val draw : maze -> unit
 
-  (* Solve a maze graphically *)
+    (* Solve a maze graphically *)
     val solve : maze -> unit
   end
 
@@ -134,7 +139,7 @@ module Maze (C : CELL) : (MAZE with type cell = C.c) =
 
     (* ##### GENERATE ##### *)
 
-    (* Initializes an empty maze of size n at (0, 0) *)
+    (* initializes an empty maze of size n at (0, 0) *)
     let initialize (n : int) : maze = [C.generate (0, 0) n]
 
     let generate n = 
@@ -153,28 +158,49 @@ module Maze (C : CELL) : (MAZE with type cell = C.c) =
     (* sets up the screen *)
     (* screen is 700 by 700; actual maze is 512 by 512 *)
     let display_screen () : unit = 
-      open_graph " 700x700"
-      (* display title *)
-      (* draw border *)
+      open_graph (" " ^ string_of_int window_size ^ "x" ^ string_of_int window_size);
+      set_window_title "The O-Maze-ing Caml";
+      draw_rect margin margin maze_size maze_size
 
     (* draw a single cell *)
-    let draw_cell c : unit = ()
+    let draw_cell (n : int) (c : cell) : unit = 
+      let (x,y) = C.get_pos c in
+      let scale = maze_size / n in
+      let (screen_x, screen_y) = (scale * x + margin, scale * y + margin) in
+      moveto screen_x screen_y;
+      if not (C.get_left c) then lineto screen_x (screen_y + scale);
+      moveto screen_x screen_y;
+      if not (C.get_bottom c) then lineto (screen_x + scale) screen_y
 
     (* draw the maze based on cell list *)
-    let draw_maze m : unit = () 
-
-    (* randomly remove 2 walls on border for start and end points *)
-    let finish_draw () : unit = ()
+    let draw_maze m : unit = 
+      let n = int_of_float (sqrt (float_of_int (List.length m))) in
+      let scale = maze_size / n in
+      List.iter (draw_cell n) m;
+      (* color 2 walls red on border for start and end points *)
+      set_color red;
+      set_line_width 3;
+      moveto margin margin;
+      lineto (margin + scale) margin;
+      moveto (margin + maze_size - scale) (margin + maze_size) ;
+      lineto (margin + maze_size) (margin + maze_size);
+      moveto margin (margin - 10);
+      draw_string "Start Here";
+      moveto (margin + maze_size) (margin + maze_size + 10);
+      draw_string "End Here"
 
     (* do the entire process *)
     let draw m = 
+      close_graph ();
       display_screen ();
-      draw_maze m;
-      finish_draw ()
+      draw_maze m
 
     (* ##### SOLVE ##### *)
       
-    let solve m = ()
+    let solve m = 
+      close_graph ();
+      draw m
+      (* solve *)
     
   end
 
