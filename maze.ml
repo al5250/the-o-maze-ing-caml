@@ -184,9 +184,9 @@ module Maze (C : CELL) : (MAZE with type cell = C.c) =
       lineto (margin + scale) margin;
       moveto (margin + maze_size - scale) (margin + maze_size) ;
       lineto (margin + maze_size) (margin + maze_size);
-      moveto margin (margin - 10);
+      moveto margin (margin - 15);
       draw_string "Start Here";
-      moveto (margin + maze_size) (margin + maze_size + 10);
+      moveto (margin + maze_size - scale) (margin + maze_size + 15);
       draw_string "End Here"
 
     (* do the entire process *)
