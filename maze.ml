@@ -8,6 +8,10 @@
  * Section 1: Cells
  *)
 
+open Graphics
+
+#load "graphics.cma";;
+
 module type CELL =
   sig
     type c 
@@ -128,6 +132,8 @@ module Maze (C : CELL) : (MAZE with type cell = C.c) =
     let to_string m = 
       List.fold_left (fun a e -> a ^ (C.to_string e)) "" m
 
+    (* ##### GENERATE ##### *)
+
     (* Initializes an empty maze of size n at (0, 0) *)
     let initialize (n : int) : maze = [C.generate (0, 0) n]
 
@@ -138,13 +144,38 @@ module Maze (C : CELL) : (MAZE with type cell = C.c) =
         | hd::tl ->
           let dims = C.get_dim hd in
           if fst dims = 1 || snd dims = 1 then m
-          else generate' (List.fold_left (fun a e -> a @ (C.divide e)) [] m)
+          else generate' (List.fold_left (fun a e -> List.append (C.divide e) a) [] m)
       in
       generate' (initialize n)
 
-    let draw m = ()
+    (* ##### DRAW ##### *)
 
+    (* sets up the screen *)
+    (* screen is 700 by 700; actual maze is 512 by 512 *)
+    let display_screen () : unit = 
+      open_graph " 700x700"
+      (* display title *)
+      (* draw border *)
+
+    (* draw a single cell *)
+    let draw_cell c : unit = ()
+
+    (* draw the maze based on cell list *)
+    let draw_maze m : unit = () 
+
+    (* randomly remove 2 walls on border for start and end points *)
+    let finish_draw () : unit = ()
+
+    (* do the entire process *)
+    let draw m = 
+      display_screen ();
+      draw_maze m;
+      finish_draw ()
+
+    (* ##### SOLVE ##### *)
+      
     let solve m = ()
+    
   end
 
 (* Make a square maze with square cells *)
