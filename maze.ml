@@ -122,6 +122,8 @@ module type MAZE =
   sig
     type cell
     type maze
+    type array_cell
+    type array_maze
     val to_string : maze -> string
 
     (* Generate a maze of size n, where n is a power of 2 *)
@@ -129,6 +131,12 @@ module type MAZE =
 
     (* Solve a maze graphically *)
     val solve : maze -> unit
+
+    val to_matrix : maze -> array_maze
+
+    val print_cell : array_cell -> unit
+
+    val get_cell : array_maze -> int -> int -> array_cell
   end
 
 module Maze (C : CELL) : (MAZE with type cell = C.c) =
@@ -220,24 +228,81 @@ module Maze (C : CELL) : (MAZE with type cell = C.c) =
       let maze_array = make_matrix n n {top=false; bottom=false; left=false; right=false} in
       let to_matrix' (m : array_maze) (c : cell) : unit =
         let (x, y) = C.get_pos c in
-        let left = C.get_left c in
-        let bottom = C.get_bottom c in
-        m.(n-y).(x) <- {m.(n-y).(x) with left; bottom};
-        if x > 0 then m.(n-y).(x-1) <- {m.(n-y).(x-1) with right=left};
-        if y > 0 then m.(n-y-1).(x) <- {m.(n-y-1).(x) with top=bottom};
+        let left' = C.get_left c in
+        let bottom' = C.get_bottom c in
+        m.(x).(y) <- {m.(x).(y) with left=left'; bottom=bottom'};
+        if y > 0 then m.(x).(y-1) <- {m.(x).(y-1) with top=bottom'};
+        if x > 0 then m.(x-1).(y) <- {m.(x-1).(y) with right=left'};
       in
       List.iter (to_matrix' maze_array) m;
       maze_array
 
-    let rec try_move (x : int) (y : int) (m : array_maze) : unit = ()
       (* try to go up, right, down, left *)
       (* if move is beyond maze bounds or blocked by a wall, go back and try next direction *)
       (* if move is allowed, move to new cell, paint cell, and call try_move again *)
       (* after all moves have been exhausted, trace back to last cell *)
 
+
+    let find_path (m : array_maze) : (int * int) list = 
+      let n = Array.length m in 
+      let frontier = ref [(0, 0)] in
+      let path = ref [(0, 0)] in
+      let is_neighbor (pos1 : int * int) (pos2 : int * int) : bool = 
+        let (x1, y1) = pos1 in
+        let (x2, y2) = pos2 in
+        match (x1 - x2, y1 - y2) with
+        | (0,1) -> m.(x1).(y1).bottom 
+        | (1,0) -> m.(x1).(y1).left 
+        | (0,-1) -> m.(x1).(y1).top 
+        | (-1,0) -> m.(x1).(y1).right 
+        | _ -> false
+      in
+      let get_neighbors ((x, y) : int * int) : (int * int) list = 
+        let neighbors = ref [] in
+        if (y < n-1) && (is_neighbor (x, y) (x, y+1)) then neighbors := (x, y+1)::!neighbors; 
+        if (y > 0) && (is_neighbor (x, y) (x, y-1)) then neighbors := (x, y-1)::!neighbors;
+        if (x < n-1) && (is_neighbor (x, y) (x+1, y)) then neighbors := (x+1, y)::!neighbors;
+        if (x > 0) && (is_neighbor (x, y) (x-1, y)) then neighbors := (x-1, y)::!neighbors;
+        !neighbors
+      in  
+      let rec backtrack () : unit =
+        let h::t = !path in 
+        if is_neighbor (List.hd !frontier) h 
+        then ()
+        else 
+        path := t;
+        backtrack ()
+      in 
+      let rec explore () : unit = 
+        let h::t = !frontier in
+        if h = (n-1, n-1) then () 
+        else
+        frontier := t;
+        match get_neighbors h with
+        | [] -> backtrack (); explore ()
+        | nb -> 
+          List.iter (fun e -> 
+            if e <> List.hd !path then frontier := e::!frontier) nb;
+          h::!path; 
+          explore ()
+      in
+      explore ();
+      !path
+
+    let get_cell (m : array_maze) (n1 : int) (n2 : int) : array_cell =
+      m.(n1).(n2)
+
+    let print_cell (c : array_cell) : unit =
+      print_string ("(" ^ string_of_bool c.top ^ "," ^ string_of_bool c.right ^ ","
+        ^ string_of_bool c.bottom ^ "," ^ string_of_bool c.left ^ "), ")
+
+    let print_shit (melly : (int * int) list) : unit =
+      print_string (List.fold_left (fun a e -> "(" ^ (string_of_int (fst e)) ^ "," ^ (string_of_int (snd e)) ^ "), ") "" melly) 
+
     let solve m = 
       close_graph ();
       draw m;
+      print_shit (find_path (to_matrix m))
     
   end
 
