@@ -4,11 +4,8 @@
  * Melissa Yu, Alex Lin
  *)
 
-(* ====================================================================
- * Section 1: Cells
- *)
-
-open Graphics
+open Graphics;;
+open Array;;
 
 #load "graphics.cma";;
 
@@ -16,6 +13,11 @@ open Graphics
 let window_size = 612
 let margin = 50
 let maze_size = window_size - 2 * margin
+
+
+(* ====================================================================
+ * Section 1: Cells
+ *)
 
 module type CELL =
   sig
@@ -34,14 +36,20 @@ module type CELL =
     (* Divide a cell into 4 cells and return a list of the new cells *)
     val divide: c -> c list
 
-    (* Get cell values *)
+    (* returns coordinates (x,y) of bottom left corner of cell *)
     val get_pos: c -> int * int
+
+    (* returns tuple (width,height) of cell *)
     val get_dim: c -> int * int
+
+    (* returns boolean indicating if left wall has hole *)
     val get_left: c -> bool
+
+    (* returns boolean indicating if bottom wall has hole *)
     val get_bottom: c -> bool
   end
 
-module SquareCell =
+module SquareCell : CELL =
   struct
     (* Square cell: 
      * Position: Coordinates of bottom left corner of cell
@@ -71,20 +79,14 @@ module SquareCell =
       }
 
     let open_left c =
-      c.left <- not c.left
+      c.left <- true
 
     let open_bottom c =
-      c.bottom <- not c.bottom
+      c.bottom <- true
 
-    (* Helper function for divide *)
-    let modify (c1 : c) (c2 : c) (left_space : bool) : unit =
-      match Random.int 2 with
-      | 0 -> 
-        if left_space then open_left c1
-        else open_bottom c1
-      | 1 -> 
-        if left_space then open_left c2
-        else open_bottom c2
+    (* applies f to one of two cells at random *)
+    let modify (c1 : c) (c2 : c) (f : c -> unit) : unit =
+      if Random.int 2 = 0 then f c1 else f c2
 
     let divide (c : c) : c list =
       let (x, y) = c.pos in
@@ -95,8 +97,8 @@ module SquareCell =
         let c2 = generate (x, y + dl) dl in
         let c3 = generate (x + dl, y + dl) dl in 
         let c4 = generate (x + dl, y) dl in 
-        if c.left then modify c1 c2 true;
-        if c.bottom then modify c1 c4 false;
+        if c.left then modify c1 c2 open_left;
+        if c.bottom then modify c1 c4 open_bottom;
         match Random.int 4 with
         | 0 -> open_left c3; open_bottom c3; open_left c4; [c1; c2; c3; c4]
         | 1 -> open_bottom c2; open_bottom c3; open_left c4; [c1; c2; c3; c4]
@@ -104,8 +106,11 @@ module SquareCell =
         | 3 -> open_bottom c2; open_left c3; open_bottom c3; [c1; c2; c3; c4]
 
     let get_pos c = c.pos
+
     let get_dim c = (c.length, c.length)
+
     let get_left c = c.left
+
     let get_bottom c = c.bottom
   end
 
@@ -131,19 +136,30 @@ module Maze (C : CELL) : (MAZE with type cell = C.c) =
     type cell = C.c
     type maze = cell list
 
+    (* cell representation for solving *)
+    type array_cell = {
+      top     : bool;
+      bottom  : bool;
+      left    : bool;
+      right   : bool;
+    }
+
+    (* maze representation for solving *)
+    type array_maze = array_cell array array
+
     let to_string m = 
       List.fold_left (fun a e -> a ^ (C.to_string e)) "" m
 
     (* ##### DRAW ##### *)
 
     (* sets up the screen *)
-    (* screen is 700 by 700; actual maze is 512 by 512 *)
     let display_screen () : unit = 
-      open_graph (" " ^ string_of_int window_size ^ "x" ^ string_of_int window_size);
+      open_graph (" " ^ string_of_int window_size ^ "x" 
+        ^ string_of_int window_size);
       set_window_title "The O-Maze-ing Caml";
       draw_rect margin margin maze_size maze_size
 
-    (* draw a single cell *)
+    (* draw a single cell given length of one side of maze *)
     let draw_cell (n : int) (c : cell) : unit = 
       let (x,y) = C.get_pos c in
       let scale = maze_size / n in
@@ -158,7 +174,8 @@ module Maze (C : CELL) : (MAZE with type cell = C.c) =
       let n = int_of_float (sqrt (float_of_int (List.length m))) in
       let scale = maze_size / n in
       List.iter (draw_cell n) m;
-      (* color 2 walls red on border for start and end points *)
+
+      (* finish drawing - color and label start and end points *)
       set_color red;
       set_line_width 4;
       moveto margin margin;
@@ -188,18 +205,39 @@ module Maze (C : CELL) : (MAZE with type cell = C.c) =
         | hd::tl ->
           let dims = C.get_dim hd in
           if fst dims = 1 || snd dims = 1 then m
-          else generate' (List.fold_left (fun a e -> List.append (C.divide e) a) [] m)
+          else generate' (List.fold_left (fun a e -> 
+            List.append (C.divide e) a) [] m)
       in
       let new_maze = generate' (initialize n) in
-        draw new_maze;
-        new_maze
+      draw new_maze;
+      new_maze
 
     (* ##### SOLVE ##### *)
-      
+    
+    (* populate matrix with cell data *)
+    let to_matrix (m : maze) : array_maze = 
+      let n = int_of_float (sqrt (float_of_int (List.length m))) in
+      let maze_array = make_matrix n n {top=false; bottom=false; left=false; right=false} in
+      let to_matrix' (m : array_maze) (c : cell) : unit =
+        let (x, y) = C.get_pos c in
+        let left = C.get_left c in
+        let bottom = C.get_bottom c in
+        m.(n-y).(x) <- {m.(n-y).(x) with left; bottom};
+        if x > 0 then m.(n-y).(x-1) <- {m.(n-y).(x-1) with right=left};
+        if y > 0 then m.(n-y-1).(x) <- {m.(n-y-1).(x) with top=bottom};
+      in
+      List.iter (to_matrix' maze_array) m;
+      maze_array
+
+    let rec try_move (x : int) (y : int) (m : array_maze) : unit = ()
+      (* try to go up, right, down, left *)
+      (* if move is beyond maze bounds or blocked by a wall, go back and try next direction *)
+      (* if move is allowed, move to new cell, paint cell, and call try_move again *)
+      (* after all moves have been exhausted, trace back to last cell *)
+
     let solve m = 
       close_graph ();
-      draw m
-      (* solve *)
+      draw m;
     
   end
 
