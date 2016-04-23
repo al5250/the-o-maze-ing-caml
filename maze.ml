@@ -218,7 +218,7 @@ module Maze (C : CELL) : (MAZE with type cell = C.c) =
     let print_shit (melly : (int * int) list) : unit =
       print_string (List.fold_left (fun a e -> "(" ^ (string_of_int (fst e)) ^ "," 
         ^ (string_of_int (snd e)) ^ "), " ^ a) "" melly) 
-      
+
     (* populate matrix with cell data *)
     let to_matrix (m : maze) : array_maze = 
       let n = int_of_float (sqrt (float_of_int (List.length m))) in
@@ -308,11 +308,20 @@ module Maze (C : CELL) : (MAZE with type cell = C.c) =
       explore m frontier path;
       !path
 
+    (* draws solution given dimension of matrix *)
+    let draw_solution (soln : (int * int) list) (n : int) : unit = 
+      let scale = maze_size / n in
+      let color_block ((x, y) : int * int) : unit =
+        set_color blue;
+        fill_rect (scale * x + margin) (scale * y + margin) scale scale
+      in List.iter color_block soln
+
     (* finds the solution to a maze and renders it *)
     let solve m = 
-      close_graph ();
-      draw m;
-      print_shit (find_path (to_matrix m))
+      (* draw m; *)
+      let matrix_m = to_matrix m in
+      let solution = find_path matrix_m in
+      draw_solution solution (Array.length matrix_m)
     
   end
 
