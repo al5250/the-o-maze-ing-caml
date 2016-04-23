@@ -245,11 +245,8 @@ module Maze (C : CELL) : (MAZE with type cell = C.c) =
        let print_shit (melly : (int * int) list) : unit =
       print_string (List.fold_left (fun a e -> "(" ^ (string_of_int (fst e)) ^ "," ^ (string_of_int (snd e)) ^ "), " ^ a) "" melly) 
 
-    let find_path (m : array_maze) : (int * int) list = 
-      let n = Array.length m in 
-      let frontier = ref [(0, 0)] in
-      let path = ref [(0, 0)] in
-      let is_neighbor (pos1 : int * int) (pos2 : int * int) : bool = 
+    (* true if pos2 is accessible from pos1 in the maze *)
+    let is_neighbor (m : array_maze) (pos1 : int * int) (pos2 : int * int) : bool = 
         let (x1, y1) = pos1 in
         let (x2, y2) = pos2 in
         match (x1 - x2, y1 - y2) with
@@ -258,29 +255,35 @@ module Maze (C : CELL) : (MAZE with type cell = C.c) =
         | (0,-1) -> m.(x1).(y1).top 
         | (-1,0) -> m.(x1).(y1).right 
         | _ -> false
-      in
-      let get_neighbors ((x, y) : int * int) : (int * int) list = 
+
+    (* finds all adjacent and accessible squares in the maze *)
+    let get_neighbors (m : array_maze) ((x, y) : int * int) : (int * int) list = 
+        let n = Array.length m in 
         let neighbors = ref [] in
         neighbors := [];
-        if (y < n-1) && (is_neighbor (x, y) (x, y+1)) then neighbors := (x, y+1)::!neighbors; 
-        if (y > 0) && (is_neighbor (x, y) (x, y-1)) then neighbors := (x, y-1)::!neighbors;
-        if (x < n-1) && (is_neighbor (x, y) (x+1, y)) then neighbors := (x+1, y)::!neighbors;
-        if (x > 0) && (is_neighbor (x, y) (x-1, y)) then neighbors := (x-1, y)::!neighbors;
+        if (y < n-1) && (is_neighbor m (x, y) (x, y+1)) then neighbors := (x, y+1)::!neighbors; 
+        if (y > 0) && (is_neighbor m (x, y) (x, y-1)) then neighbors := (x, y-1)::!neighbors;
+        if (x < n-1) && (is_neighbor m (x, y) (x+1, y)) then neighbors := (x+1, y)::!neighbors;
+        if (x > 0) && (is_neighbor m (x, y) (x-1, y)) then neighbors := (x-1, y)::!neighbors;
         !neighbors
-      in  
-      let rec backtrack () : unit =
+
+    (* backtracks along the current path of exploration until a new path is found *)
+    let rec backtrack (m : array_maze) (frontier : (int * int) list ref) 
+        (path : (int * int) list ref) : unit =
         (* print_string "path"; 
         print_shit (!path);
         print_string "\n"; *)
         let h::t = !path in 
-
-        if is_neighbor (List.hd !frontier) h 
+        if is_neighbor m (List.hd !frontier) h 
         then ()
         else 
         (path := t;
-        backtrack ())
-      in 
-      let rec explore () : unit = 
+        backtrack m frontier path)
+
+    (* keeps exploring/extending the path forward until we hit a dead end *)
+    let rec explore (m : array_maze) (frontier : (int * int) list ref) 
+        (path : (int * int) list ref) : unit = 
+        let n = Array.length m in 
         (* print_string "frontier";
         print_shit (!frontier);
         print_string "\n";
@@ -301,14 +304,22 @@ module Maze (C : CELL) : (MAZE with type cell = C.c) =
         print_string "neighbors";
         print_shit (get_neighbors h);
         print_string "\n"; *)
-        match List.filter (fun e -> e <> (List.hd !path)) (get_neighbors h) with
-        | [] -> path := h::!path; backtrack (); explore ()
+        match List.filter (fun e -> e <> (List.hd !path)) (get_neighbors m h) with
+        | [] -> 
+          (path := h::!path; 
+          backtrack m frontier path; 
+          explore m frontier path)
         | nb ->   
           List.iter (fun e -> frontier := e::!frontier) (nb);
           path := h::!path; 
-          explore ())
-      in
-      explore ();
+          explore m frontier path)
+
+    (* computes the path from the start to the end of a maze *)
+    let find_path (m : array_maze) : (int * int) list = 
+      let n = Array.length m in 
+      let frontier = ref [(0, 0)] in
+      let path = ref [(0, 0)] in
+      explore m frontier path;
       !path
 
     let get_cell (m : array_maze) (n1 : int) (n2 : int) : array_cell =
@@ -318,8 +329,7 @@ module Maze (C : CELL) : (MAZE with type cell = C.c) =
       print_string ("(" ^ string_of_bool c.top ^ "," ^ string_of_bool c.right ^ ","
         ^ string_of_bool c.bottom ^ "," ^ string_of_bool c.left ^ "), ")
 
-   
-
+    (* finds the solution to a maze and renders it *)
     let solve m = 
       close_graph ();
       draw m;
