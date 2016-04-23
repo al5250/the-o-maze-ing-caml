@@ -242,6 +242,8 @@ module Maze (C : CELL) : (MAZE with type cell = C.c) =
       (* if move is allowed, move to new cell, paint cell, and call try_move again *)
       (* after all moves have been exhausted, trace back to last cell *)
 
+       let print_shit (melly : (int * int) list) : unit =
+      print_string (List.fold_left (fun a e -> "(" ^ (string_of_int (fst e)) ^ "," ^ (string_of_int (snd e)) ^ "), " ^ a) "" melly) 
 
     let find_path (m : array_maze) : (int * int) list = 
       let n = Array.length m in 
@@ -259,6 +261,7 @@ module Maze (C : CELL) : (MAZE with type cell = C.c) =
       in
       let get_neighbors ((x, y) : int * int) : (int * int) list = 
         let neighbors = ref [] in
+        neighbors := [];
         if (y < n-1) && (is_neighbor (x, y) (x, y+1)) then neighbors := (x, y+1)::!neighbors; 
         if (y > 0) && (is_neighbor (x, y) (x, y-1)) then neighbors := (x, y-1)::!neighbors;
         if (x < n-1) && (is_neighbor (x, y) (x+1, y)) then neighbors := (x+1, y)::!neighbors;
@@ -266,25 +269,44 @@ module Maze (C : CELL) : (MAZE with type cell = C.c) =
         !neighbors
       in  
       let rec backtrack () : unit =
+        (* print_string "path"; 
+        print_shit (!path);
+        print_string "\n"; *)
         let h::t = !path in 
+
         if is_neighbor (List.hd !frontier) h 
         then ()
         else 
-        path := t;
-        backtrack ()
+        (path := t;
+        backtrack ())
       in 
       let rec explore () : unit = 
+        (* print_string "frontier";
+        print_shit (!frontier);
+        print_string "\n";
+        print_string "path";
+        print_shit (!path);
+        print_string "\n"; *)
         let h::t = !frontier in
-        if h = (n-1, n-1) then () 
+       (*  print_string "condition";
+        print_string (string_of_bool ((n-1, n-1) = h));
+        print_string "\n"; *)
+        if (n-1, n-1) = h
+        then (path := h::!path; ())
         else
-        frontier := t;
-        match get_neighbors h with
-        | [] -> backtrack (); explore ()
-        | nb -> 
-          List.iter (fun e -> 
-            if e <> List.hd !path then frontier := e::!frontier) nb;
-          h::!path; 
-          explore ()
+        (frontier := t;
+        (* print_string "popped";
+        print_string ("("^ (string_of_int (fst h)) ^ (string_of_int (snd h)) ^")");
+        print_string "\n";
+        print_string "neighbors";
+        print_shit (get_neighbors h);
+        print_string "\n"; *)
+        match List.filter (fun e -> e <> (List.hd !path)) (get_neighbors h) with
+        | [] -> path := h::!path; backtrack (); explore ()
+        | nb ->   
+          List.iter (fun e -> frontier := e::!frontier) (nb);
+          path := h::!path; 
+          explore ())
       in
       explore ();
       !path
@@ -296,8 +318,7 @@ module Maze (C : CELL) : (MAZE with type cell = C.c) =
       print_string ("(" ^ string_of_bool c.top ^ "," ^ string_of_bool c.right ^ ","
         ^ string_of_bool c.bottom ^ "," ^ string_of_bool c.left ^ "), ")
 
-    let print_shit (melly : (int * int) list) : unit =
-      print_string (List.fold_left (fun a e -> "(" ^ (string_of_int (fst e)) ^ "," ^ (string_of_int (snd e)) ^ "), ") "" melly) 
+   
 
     let solve m = 
       close_graph ();
