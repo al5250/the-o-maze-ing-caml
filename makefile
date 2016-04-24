@@ -4,8 +4,8 @@ clean :
 	@rm -rf _build
 	@rm -f main.byte
 
-main : 
-	ocamlbuild graphics.cma main.ml
+main : main.ml
+	ocamlbuild main.byte
 
 # all: main
 
