@@ -22,11 +22,20 @@
 \maketitle
 
 % Brief summary here
-The O-Maze-ing Caml is a shitting shit..
+ 
+The \textit{O-Maze-ing Caml} is an OCaml-based application that randomly generates mazes and computes the solutions to them.  The program also has graphical capabilities for rendering generated mazes onto the user's screen.  In designing this project, we intentionally employed recursive algorithms to take advantage of OCaml's functional paradigm.  The code can be found at https://github.com/al5250/the-o-maze-ing-caml.  
 
 \section{High-Level Overview}
 
+We begin with a high-level description of our project before delving into the specific details within the code files.  Section 2 address the Maze Generation portion of our program, while Section 3 focuses on Maze Solving.  
+
 \subsection{Code Structure}  %% Brief description of main.ml, cell.ml, maze.ml and the code structure (the cell module, the maze functor, etc.)
+The code is divided into three files:
+\begin{itemize}
+\item \texttt{main.ml} - executes the program 
+\item \texttt{cell.ml}
+\item \texttt{maze.ml}
+\end{itemize} 
 
 \subsection{Running the Program} %% Explain how to run the program using ./main.byte
 
