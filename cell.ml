@@ -98,4 +98,5 @@ module SquareCell : CELL =
     let get_left c = c.left
 
     let get_bottom c = c.bottom
+
   end

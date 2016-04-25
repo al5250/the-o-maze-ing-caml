@@ -4,17 +4,13 @@
  * Melissa Yu, Alex Lin
  *)
 
-open Cell;;
-open Maze;;
-
-(***********************)
-(********* Main ********)
-(***********************)
+open Cell
+open Maze
 
 (* makes a square maze with square cells *)
-module SquareMaze = (Maze(SquareCell) : MAZE with type cell = SquareCell.c) ;;
+module SquareMaze = (Maze(SquareCell) : MAZE with type cell = SquareCell.c)
 
-let usage () = print_string "invalid input, please try again\n" ;;
+let usage () = print_string "invalid input, please try again\n"
 
 (* asks user if he/she wants to randomly generate a new maze *)
 let rec new_maze () =

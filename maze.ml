@@ -4,20 +4,18 @@
  * Melissa Yu, Alex Lin
  *)
 
-open Graphics;;
-open Array;;
-open Cell;;
+open Graphics
+open Array
+open Cell
 
-(***********************)
-(*** Global Variables **)
-(***********************)
-
-let window_size = 612 ;;
-let margin = 50 ;;
-let maze_size = window_size - 2 * margin ;;
+(**** Constants ****)
+let window_size = 612
+let margin = 50
+let maze_size = window_size - 2 * margin
 
 module type MAZE = 
   sig
+    type positions
     type cell
     type maze
     val to_string : maze -> string
@@ -25,10 +23,10 @@ module type MAZE =
     (* Generate a maze of size n, where n is a power of 2 *)
     val generate : int -> maze
 
-    (* Solve a maze graphically *)
-    val solve : maze -> unit
+    (* Solve a maze *)
+    val solve : maze -> positions
 
-  end;;
+  end
 
 module Maze (C : CELL) : (MAZE with type cell = C.c) =
   struct
@@ -45,6 +43,9 @@ module Maze (C : CELL) : (MAZE with type cell = C.c) =
 
     (* maze representation for solving *)
     type array_maze = array_cell array array
+
+    (* stack of coordinates for solving *)
+    type positions = (int * int) list
 
     let to_string m = 
       List.fold_left (fun a e -> a ^ (C.to_string e)) "" m
@@ -72,11 +73,10 @@ module Maze (C : CELL) : (MAZE with type cell = C.c) =
       if not (C.get_bottom c) then lineto (screen_x + scale) screen_y
 
     (* draw the maze based on cell list *)
-    let draw_maze m : unit = 
+    let draw_maze (m : maze) : unit = 
       let n = int_of_float (sqrt (float_of_int (List.length m))) in
       let scale = maze_size / n in
       List.iter (draw_cell n) m;
-
       (* finish drawing - color and label start and end points *)
       set_color red;
       set_line_width 4;
@@ -96,13 +96,14 @@ module Maze (C : CELL) : (MAZE with type cell = C.c) =
       draw_maze m
 
     (* draw maze solution given dimension of matrix *)
-    let draw_solution (soln : (int * int) list) (n : int) : unit = 
+    let draw_solution (soln : positions) (n : int) : unit = 
       let scale = maze_size / n in
       set_line_width 2;
       set_color red;
       moveto (margin + (n-1) * scale  + scale/2) (margin + scale * n);  
       List.iter (fun (x,y) -> 
-        lineto (margin + x * scale + scale/2) (margin + y * scale + scale/2)) soln;
+        lineto (margin + x * scale + scale/2) 
+          (margin + y * scale + scale/2)) soln;
       lineto (margin + scale/2) margin
 
     (***********************)
@@ -130,7 +131,7 @@ module Maze (C : CELL) : (MAZE with type cell = C.c) =
     (**** Maze Solving *****)
     (***********************)
     
-    let print_path (path : (int * int) list) : unit =
+    let print_path (path : positions) : unit =
       print_string (List.fold_left (fun a e -> "(" ^ (string_of_int (fst e)) ^ ","
         ^ (string_of_int (snd e)) ^ "), " ^ a) "" path) 
 
@@ -163,7 +164,7 @@ module Maze (C : CELL) : (MAZE with type cell = C.c) =
         | _ -> false
 
     (* finds all adjacent and accessible cells to the current position in the maze *)
-    let get_neighbors (m : array_maze) ((x, y) : int * int) : (int * int) list =
+    let get_neighbors (m : array_maze) ((x, y) : int * int) : positions =
       let n = Array.length m in 
       let neighbors = ref [] in neighbors := [];
       if (y < n-1) && (is_neighbor m (x, y) (x, y+1)) then 
@@ -177,16 +178,16 @@ module Maze (C : CELL) : (MAZE with type cell = C.c) =
       !neighbors
 
     (* backtracks along the current path of exploration until a new path is found *)
-    let rec backtrack (m : array_maze) (frontier : (int * int) list ref) 
-      (path : (int * int) list ref) : unit =
+    let rec backtrack (m : array_maze) (frontier : positions ref) 
+      (path : positions ref) : unit =
         let (curr_cell :: tl) = !path in
         let (next_cell :: _) = !frontier in 
         if is_neighbor m next_cell curr_cell then ()
         else (path := tl; backtrack m frontier path)
 
     (* keeps exploring/extending the path forward until we hit a dead end *)
-    let rec explore (m : array_maze) (frontier : (int * int) list ref) 
-      (path : (int * int) list ref) : unit = 
+    let rec explore (m : array_maze) (frontier : positions ref) 
+      (path : positions ref) : unit = 
         let n = Array.length m in 
         let (curr_cell :: t) = !frontier in
         if curr_cell = (n-1, n-1) then (path := curr_cell :: !path; ())
@@ -208,7 +209,7 @@ module Maze (C : CELL) : (MAZE with type cell = C.c) =
         end
 
     (* computes the path from the start to the end of a maze *)
-    let find_path (m : array_maze) : (int * int) list = 
+    let find_path (m : array_maze) : positions = 
       let frontier = ref [(0, 0)] in
       let path = ref [] in
       explore m frontier path;
@@ -218,7 +219,8 @@ module Maze (C : CELL) : (MAZE with type cell = C.c) =
     let solve m = 
       let matrix_m = to_matrix m in
       let solution = find_path matrix_m in
-      draw_solution solution (Array.length matrix_m)
+      draw_solution solution (Array.length matrix_m);
+      solution
     
-  end;;
+  end
   
