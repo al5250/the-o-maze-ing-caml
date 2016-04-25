@@ -35,7 +35,7 @@ and enter_diff () =
 and show_solution maze =
 	let () = print_string "see solution? (y/n): " in
 	match read_line () with
-	| "y" -> (SquareMaze.solve maze; new_maze ())
+	| "y" -> (ignore(SquareMaze.solve maze); new_maze ())
 	| "n" -> new_maze ()
 	| _ -> usage (); show_solution maze;;
 

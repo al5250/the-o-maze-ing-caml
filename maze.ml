@@ -1,11 +1,10 @@
-(**********************************************************************
+(***********************************************************
  * CS51 Final Project, Spring 2016
  * Maze Generation, Drawing, and Solving
  * Melissa Yu, Alex Lin
  *)
 
 open Graphics
-open Array
 open Cell
 
 (**** Constants ****)
@@ -15,15 +14,25 @@ let maze_size = window_size - 2 * margin
 
 module type MAZE = 
   sig
-    type positions
+    (* representation of one cell in maze *)
     type cell
-    type maze
-    val to_string : maze -> string
 
-    (* Generate a maze of size n, where n is a power of 2 *)
+    (* representation of maze composed of cells *)
+    type maze
+
+    (* representation of stack of coordinates for solving *)
+    type positions
+
+    (* converts maze to string *)
+    val maze_to_string : maze -> string
+
+    (* converts list of positions to string *)
+    val positions_to_string : positions -> string
+
+    (* generate a maze of size n, where n is a power of 2 *)
     val generate : int -> maze
 
-    (* Solve a maze *)
+    (* solve a maze *)
     val solve : maze -> positions
 
   end
@@ -32,6 +41,7 @@ module Maze (C : CELL) : (MAZE with type cell = C.c) =
   struct
     type cell = C.c
     type maze = cell list
+    type positions = (int * int) list
 
     (* cell representation for solving *)
     type array_cell = {
@@ -43,12 +53,6 @@ module Maze (C : CELL) : (MAZE with type cell = C.c) =
 
     (* maze representation for solving *)
     type array_maze = array_cell array array
-
-    (* stack of coordinates for solving *)
-    type positions = (int * int) list
-
-    let to_string m = 
-      List.fold_left (fun a e -> a ^ (C.to_string e)) "" m
 
     (***********************)
     (******* Drawing *******)
@@ -110,6 +114,9 @@ module Maze (C : CELL) : (MAZE with type cell = C.c) =
     (*** Maze Generation ***)
     (***********************)
 
+    let maze_to_string m = 
+      List.fold_left (fun a e -> a ^ (C.to_string e)) "" m
+
     (* initializes an empty maze of size n at (0, 0) *)
     let initialize (n : int) : maze = [C.generate (0, 0) n]
 
@@ -131,14 +138,14 @@ module Maze (C : CELL) : (MAZE with type cell = C.c) =
     (**** Maze Solving *****)
     (***********************)
     
-    let print_path (path : positions) : unit =
-      print_string (List.fold_left (fun a e -> "(" ^ (string_of_int (fst e)) ^ ","
-        ^ (string_of_int (snd e)) ^ "), " ^ a) "" path) 
+    let positions_to_string (path : positions) : string =
+      List.fold_left (fun a e -> "(" ^ (string_of_int (fst e)) ^ ","
+        ^ (string_of_int (snd e)) ^ "), " ^ a) "" path
 
     (* populate matrix with cell data *)
     let to_matrix (m : maze) : array_maze = 
       let n = int_of_float (sqrt (float_of_int (List.length m))) in
-      let maze_array = make_matrix n n 
+      let maze_array = Array.make_matrix n n 
         {top=false; bottom=false; left=false; right=false} in
       let to_matrix' (m : array_maze) (c : cell) : unit =
         let (x, y) = C.get_pos c in
@@ -163,7 +170,7 @@ module Maze (C : CELL) : (MAZE with type cell = C.c) =
         | (-1,0) -> m.(x1).(y1).right 
         | _ -> false
 
-    (* finds all adjacent and accessible cells to the current position in the maze *)
+    (* finds all adjacent and accessible cells to the current cell *)
     let get_neighbors (m : array_maze) ((x, y) : int * int) : positions =
       let n = Array.length m in 
       let neighbors = ref [] in neighbors := [];
@@ -177,36 +184,44 @@ module Maze (C : CELL) : (MAZE with type cell = C.c) =
         neighbors := (x-1, y) :: !neighbors;
       !neighbors
 
-    (* backtracks along the current path of exploration until a new path is found *)
+    (* backtracks along the current path until a new path is found *)
     let rec backtrack (m : array_maze) (frontier : positions ref) 
       (path : positions ref) : unit =
-        let (curr_cell :: tl) = !path in
-        let (next_cell :: _) = !frontier in 
-        if is_neighbor m next_cell curr_cell then ()
-        else (path := tl; backtrack m frontier path)
+        match !path with
+        | [] -> raise (Invalid_argument "Backtrack: empty path")
+        | curr_cell :: tl ->
+          match !frontier with
+          | [] -> raise (Invalid_argument "Backtrack: empty frontier")
+          | next_cell :: _ -> 
+            if is_neighbor m next_cell curr_cell then ()
+            else 
+              (path := tl; 
+              backtrack m frontier path)
 
     (* keeps exploring/extending the path forward until we hit a dead end *)
     let rec explore (m : array_maze) (frontier : positions ref) 
       (path : positions ref) : unit = 
         let n = Array.length m in 
-        let (curr_cell :: t) = !frontier in
-        if curr_cell = (n-1, n-1) then (path := curr_cell :: !path; ())
-        else begin
-          frontier := t;
-          let filter_helper path e = 
-            match !path with
-            | [] -> true 
-            | hd::_ -> e <> hd
-          in
-          match List.filter (filter_helper path) (get_neighbors m curr_cell) with
-          | [] -> 
-            (backtrack m frontier path; 
-            explore m frontier path)
-          | nb -> 
-            (List.iter (fun e -> frontier := e :: !frontier) nb;
-            path := curr_cell :: !path; 
-            explore m frontier path)
-        end
+        match !frontier with
+        | [] -> raise (Invalid_argument "Explore: empty frontier")
+        | curr_cell :: t -> 
+          if curr_cell = (n-1, n-1) then (path := curr_cell :: !path; ())
+          else begin
+            frontier := t;
+            let filter_helper path e = 
+              match !path with
+              | [] -> true 
+              | hd :: _ -> e <> hd
+            in
+            match List.filter (filter_helper path) (get_neighbors m curr_cell) with
+            | [] -> 
+              (backtrack m frontier path; 
+              explore m frontier path)
+            | nb -> 
+              (List.iter (fun e -> frontier := e :: !frontier) nb;
+              path := curr_cell :: !path; 
+              explore m frontier path)
+          end
 
     (* computes the path from the start to the end of a maze *)
     let find_path (m : array_maze) : positions = 
