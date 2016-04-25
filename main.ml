@@ -4,26 +4,28 @@
  * Melissa Yu, Alex Lin
  *)
 
-(* #use "methods.ml";; *)
-open Methods
+open Cell;;
+open Maze;;
 
 (***********************)
 (********* Main ********)
 (***********************)
 
-(* Make a square maze with square cells *)
+(* makes a square maze with square cells *)
 module SquareMaze = (Maze(SquareCell) : MAZE with type cell = SquareCell.c) ;;
 
-let usage () = print_string "invalid input, pls try again\n" ;;
+let usage () = print_string "invalid input, please try again\n" ;;
 
+(* asks user if he/she wants to randomly generate a new maze *)
 let rec new_maze () =
   let () = print_string "new maze? (y/n): " in
   match read_line () with
   | "y" -> enter_diff ()
 	| "n" -> print_newline ()
 	| _ -> usage (); new_maze ()
-and
-enter_diff () =
+
+(* asks user for difficulty level *)
+and enter_diff () =
 	let () = print_string "enter a difficulty (between 1 and 7) to generate maze: " in
   try 
   	let level = read_int () in 
@@ -32,8 +34,9 @@ enter_diff () =
   		let maze = SquareMaze.generate (int_of_float (2. ** (float_of_int level))) in
   		show_solution maze
   with Failure _ -> usage (); enter_diff ()
-and
-show_solution maze =
+
+(* asks user if he/she wants to see the solution to the maze *)
+and show_solution maze =
 	let () = print_string "see solution? (y/n): " in
 	match read_line () with
 	| "y" -> (SquareMaze.solve maze; new_maze ())
