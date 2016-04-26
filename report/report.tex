@@ -161,8 +161,28 @@ A more subtle benefit of having each side tracked by only one cell becomes appar
    
 \subsection{Functions Explained} %% Go through each function in generate and explain what it does/how they interact with each other
 
-\subsection{Rendering Graphics} %% Describe how we display the solution to the maze using the Graphics module
+\subsubsection{Maze}
+\begin{itemize}
+\item \texttt{initialize} - Creates an empty maze of size $n$, i.e. a single cell at (0,0) with side length $n$, by calling the Cell module \texttt{C}'s generate function.
+\item \texttt{generate} - Main function used for maze generation. Creates a $n$ by $n$ maze of cells by recursively calling the Cell module \texttt{C}'s \texttt{divide} function on the initial cell outputted by \texttt{initialize}, returns the resulting maze as a \texttt{maze: cell list}, and draws the maze as a side effect.
+\end{itemize}
 
+\subsubsection{Cell}
+\begin{itemize}
+\item \texttt{generate} - Creates a cell with the specified position and dimensions, with the bottom and left walls closed by default. 
+\item \texttt{divide} - Divides a single cell into four smaller cells of equal size in two steps. Let's call the original cell $c$. \texttt{divide} does the following: (1) Bisects the bottom and left walls of $c$ to create $c_i$. If the wall being bisected was originally open, \texttt{divide} preserves the perfect maze invariant by calling \texttt{modify}, which chooses one of the two halves of the original wall to remain open (for more detail, see the discussion in 2.1). (2) Randomly sets three of the four inner walls of the divided cell to be open, leaving the remaining one closed.  
+\item \texttt{modify} - Randomly chooses one of two input cells to apply the specified function \texttt{f} to. 
+\end{itemize}
+
+\subsection{Rendering Graphics} %% Describe how we display the solution to the maze using the Graphics module
+Once generated, drawing the maze is straightforward. Using the OCaml \texttt{Graphics} module, which includes functions for creating a new graph, drawing a line between points, and rendering text, we simply initialize an empty graphics window and then iterate through all cells in the maze, drawing each one:
+
+\begin{itemize}
+\item \texttt{display_screen} - initializes an empty graphics window with a square maze frame and title
+\item \texttt{draw_cell} - draws a single cell by checking the left and bottom walls of the cell and drawing a line between the current position, $(x, y)$, and $(x, y + dy)$ if the left wall is open, or $(x + dx, y)$ if the bottom wall is open. $dx$ and $dy$ are the scaled lengths of a cell on the display screen. Note that all positions encoded in a cell assume a cell has side length 1 pixel. When rendering a maze, these positions are scaled by a factor determined by the window and maze size.
+\item \texttt{display_screen} - iterates through all cells in a maze and calls \texttt{draw_cell} on each one. Although each iteration of \texttt{draw_cell} only draws the left and bottom walls of any given cell, iterating through all cells gives us a complete picture, since the top and right walls of any given cell are the bottom and left walls of the adjacent cells, and we have already drawn the outermost four walls of the maze in \texttt{display_screen}. 
+\item \texttt{draw} - main function for drawing unsolved mazes; calls \texttt{display_screen} and \texttt{draw_cell}
+\end{itemize} 
 
 \section{Maze Solving} 
 
