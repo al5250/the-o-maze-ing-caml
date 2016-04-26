@@ -18,7 +18,7 @@ let rec new_maze () =
   match read_line () with
   | "y" -> enter_diff ()
 	| "n" -> print_newline ()
-	| _ -> usage (); new_maze ()
+	| _ -> (usage (); new_maze ())
 
 (* asks user for difficulty level *)
 and enter_diff () =
@@ -37,6 +37,6 @@ and show_solution maze =
 	match read_line () with
 	| "y" -> (ignore(SquareMaze.solve maze); new_maze ())
 	| "n" -> new_maze ()
-	| _ -> usage (); show_solution maze;;
+	| _ -> (usage (); show_solution maze);;
 
 new_maze () ;;

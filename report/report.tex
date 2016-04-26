@@ -3,14 +3,19 @@
 \usepackage{amsfonts}
 \usepackage[margin=1in]{geometry}
 \usepackage{fancyhdr}
-\newenvironment{proof}{\noindent {\it Proof.}}{\hfill\rule{2mm}{2mm}}
+\newcommand{\tab}{\par \qquad}
+\newenvironment{proof}{ {\it Proof.}}{\hfill\rule{2mm}{2mm}}
 \pagestyle{fancy}
-\lhead{\textbf{Math 23b: PSET 8}}
-\rhead{\textit{Alex Lin}}
+\lhead{\textbf{CS 51: Final Project}}
+\rhead{\textit{Alex Lin, Melissa Yu}}
 \cfoot{\thepage}
 \renewcommand{\headrulewidth}{0.4pt}
 \renewcommand{\footrulewidth}{0.4pt}
 \makeatletter
+
+\usepackage{graphicx}
+\usepackage{float}
+\graphicspath{ {img/} }
 
 %% NOTE: Use \texttt{} for code font.  
 
@@ -20,6 +25,8 @@
 \author{Alex Lin and Melissa Yu}
 \date{April 27, 2016}
 \maketitle
+
+\setlength\parindent{0pt}
 
 % Brief summary here
  
@@ -32,17 +39,113 @@ We begin with a high-level description of our project before delving into the sp
 \subsection{Code Structure}  %% Brief description of main.ml, cell.ml, maze.ml and the code structure (the cell module, the maze functor, etc.)
 The code is divided into three files:
 \begin{itemize}
-\item \texttt{main.ml} - executes the program 
-\item \texttt{cell.ml}
-\item \texttt{maze.ml}
+\item \texttt{main.ml} - interprets user input and executes the relevant functions of the program  
+\item \texttt{cell.ml} - contains the \textsc{Cell} module, which provides implementation for the individual square units that the maze is composed of
+\item \texttt{maze.ml} - contains the \textsc{Maze} functor, which provides implementation for maze generation and maze solving based on the \textsc{Cell} module; this file contains the bulk of the project code   
 \end{itemize} 
 
+
+This division was enforced to logically separate the creation of maze modules (\texttt{cell.ml}, \texttt{maze.ml}) from their use (\texttt{main.ml}).  Furthermore, we noted that mazes of different shapes and sizes could be created based on the properties of their cells.  Thus, we packaged the implementation for cells separately from the implementation for mazes; this led us to naturally create a \textsc{Maze} functor that inputed modules of type \textsc{CELL} and outputted modules of type \textsc{MAZE}.
+\tab In \textsc{Maze}, we also render the maze and its solution onto a graphical interface as a side effect of the \texttt{generate} and \texttt{solve} functions.  Initially, we considered factoring all of the drawing functions into a separate module, yet we later decided that there was no need for this extra layer of abstraction, as users do not have much of a reason for creating mazes but not viewing them.     
+
 \subsection{Running the Program} %% Explain how to run the program using ./main.byte
+To run the program, enter \texttt{./main.byte} into the command line.  You will be prompted with
+
+\begin{flushleft}
+\quad \quad \texttt{\# new maze? (y/n): } 
+\end{flushleft}
+
+Enter '\texttt{y}' for yes and you will see
+
+\begin{flushleft}
+\quad \quad \texttt{\# enter a difficulty (between 1 and 7) to generate maze:}
+\end{flushleft}
+
+
+Entering the number $k$ will prompt the program to randomly generate a maze of size $2^k$ by $2^k$ cells.  
+
+\begin{figure}[H]
+\begin{center}
+\includegraphics[scale=0.32]{example.jpg}
+\caption{An example of a randomly generated $2^4$ x $2^4$ maze.}
+\end{center}
+\end{figure}
+
+After the maze renders, you will see 
+
+\begin{flushleft}
+\quad \quad \texttt{\# see solution? (y/n):}
+\end{flushleft}
+
+ 
+Enter '\texttt{y}' for yes and you will see the solution to your randomly generated maze drawn in red.
+
+\begin{figure}[H]
+\begin{center}
+\includegraphics[scale=0.32]{solution.jpg}
+\caption{The solution to the above maze.}
+\end{center}
+\end{figure}
+
+
+ The program will then loop back to the beginning with 
+
+\begin{flushleft}
+\quad \quad \texttt{\# new maze? (y/n): } 
+\end{flushleft}
+
+
+Enter '\texttt{y}' for a new maze and  '\texttt{n}' to quit the program.
+
+
+    
 
 \section{Maze Generation}
 
-\subsection{Recursive-Division Algorithm}  %% Explain theory behind recursive division algorithm, how our algorithm executes it, and the design decisions we made (like the record type cell) 
+The first of the two major components of our program addresses how to randomly create perfect mazes, given the dimension of the maze. By \emph{perfect maze}, we mean a maze that only has one possible solution.    
 
+\subsection{Recursive-Division Algorithm}  %% Explain theory behind recursive division algorithm, how our algorithm executes it, and the design decisions we made (like the record type cell) 
+The recursive division algorithm is the fundamental idea behind how our \texttt{generate} function in \texttt{maze.ml} works.  Although there are many algorithms for maze generation, such as Prim's, Kruskal's, Depth-First Search, etc., we chose recursive division, because it works well with OCaml's functional paradigm.  Mazes are comprised of cells.  Each cell has four sides - top, bottom, left, and right.  Adjacent cells share a side.  Each side can either be \emph{closed} (i.e. there is a wall between the two adjacent cells) or \emph{open} (i.e. there is no wall and one can move freely between the adjacent cells).  
+\tab Let's say we want to generate an $n$ by $n$ maze.  The algorithm begins with a single square cell of size $n$ by $n$.   This single cell is then divided into four $\frac{n}{2}$ by $\frac{n}{2}$ cells.  To preserve the maze structure, only one of the four inner cell sides are kept as a wall; the other three are opened.    
+
+\begin{figure}[H]
+\begin{center}
+\includegraphics[scale=0.7]{gen1.jpg}
+\end{center}
+\caption{A cell is divided into four smaller cells.  Only one inner side is kept closed.}
+\end{figure}     
+
+
+Then, the algorithm recursively goes through the same process on each $\frac{n}{2}$ by $\frac{n}{2}$ cell.  During the recursive division process, if an open side of length $m$ is split into two sides of length $\frac{m}{2}$, only one of these sides can be open; the other must be closed.  We do this to preserve the perfect maze invariant; at any point in the algorithm, there can only be one way to get from any cell to any other cell.              
+
+\begin{figure}[H]
+\begin{center}
+\includegraphics[scale=0.7]{gen2.jpg}
+\end{center}
+\caption{An open side is divided into 2 smaller sides - one closed and one open (see red).}
+\end{figure}
+
+We hit the base case when the length of the cell side is equal to 1.  At this point, we stop dividing and return the resulting perfect maze of $n$ by $n$ cells.  We make two sides on the outer boundary open to have a start point and an end point.    
+
+\tab One advantage of this algorithm is that it is optimally efficient; to produce a maze of $n^2$ cells, it takes $O(n^2)$ time.  Let $T(n)$ be the time it takes to create a $n$ by $n$ maze using recursive division.  The recurrence relation is then
+\begin{align*}
+T(n) = 4T\left(\frac{n}{2}\right) + c
+\end{align*}  
+where $c$ is a constant representing the constant work done at each division.  Unraveling the recurrence, we have
+\begin{align*}
+T(n) &= 4T\left(\frac{n}{2}\right) + c \\
+&= 4\left(4T\left(\frac{n}{4}\right) + c\right) + c \\ 
+&= 16 T\left(\frac{n}{4}\right) + 5c \\
+&= 16 \left(4T\left(\frac{n}{8}\right) + c\right) + 5c \\ 
+&= 64 T\left(\frac{n}{8}\right) + 21c \\
+& \vdots \\
+& = 4^k T\left(\frac{n}{2^k}\right) + (1 + 4 + \ldots + 4^{k-1})c
+\end{align*}
+We stop when $2^k = n$, or $k = \log_2n$.  Thus, 
+\begin{align*}
+T(n) = n^2 + (1 + 4 + \ldots + 4^{\log_2n-1}) = n^2 + \frac{4^{\log_2n} - 1}{3} = n^2 + \frac{n^2 - 1}{3} = O(n^2)
+\end{align*}
+Hence, we have shown that Recursive Division is optimally fast, because it takes $O(n^2)$ time to produce $n^2$ cell.  Thus, when we made the design decision to implement Recursive Division over other algorithms such as Prim's, Kruskal's, etc., we did not sacrifice efficiency and simultaneously enabled our program to take advantage of OCaml's functional structure.    
 \subsection{Functions Explained} %% Go through each function in generate and explain what it does/how they interact with each other
 
 \subsection{Rendering Graphics} %% Describe how we display the solution to the maze using the Graphics module
