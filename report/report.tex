@@ -106,7 +106,7 @@ The first of the two major components of our program addresses how to randomly c
 
 \subsection{Recursive-Division Algorithm}  %% Explain theory behind recursive division algorithm, how our algorithm executes it, and the design decisions we made (like the record type cell) 
 The recursive division algorithm is the fundamental idea behind how our \texttt{generate} function in \texttt{maze.ml} works.  Although there are many algorithms for maze generation, such as Prim's, Kruskal's, Depth-First Search, etc., we chose recursive division, because it works well with OCaml's functional paradigm.  Mazes are comprised of cells.  Each cell has four sides - top, bottom, left, and right.  Adjacent cells share a side.  Each side can either be \emph{closed} (i.e. there is a wall between the two adjacent cells) or \emph{open} (i.e. there is no wall and one can move freely between the adjacent cells).  
-\tab Let's say we want to generate an $n$ by $n$ maze.  The algorithm begins with a single square cell of size $n$ by $n$.   This single cell is then divided into four $\frac{n}{2}$ by $\frac{n}{2}$ cells.  To preserve the maze structure, only one of the four inner cell sides are kept as a wall; the other three are opened.    
+\tab Let's say we want to generate an $n$ by $n$ maze.  The algorithm begins with a single square cell of size $n$ by $n$.   This single cell is then divided into four $\frac{n}{2}$ by $\frac{n}{2}$ cells.  To preserve the maze structure, only one of the four inner cell sides are kept as a wall; the other three are opened.  
 
 \begin{figure}[H]
 \begin{center}
@@ -145,7 +145,20 @@ We stop when $2^k = n$, or $k = \log_2n$.  Thus,
 \begin{align*}
 T(n) = n^2 + (1 + 4 + \ldots + 4^{\log_2n-1}) = n^2 + \frac{4^{\log_2n} - 1}{3} = n^2 + \frac{n^2 - 1}{3} = O(n^2)
 \end{align*}
-Hence, we have shown that Recursive Division is optimally fast, because it takes $O(n^2)$ time to produce $n^2$ cell.  Thus, when we made the design decision to implement Recursive Division over other algorithms such as Prim's, Kruskal's, etc., we did not sacrifice efficiency and simultaneously enabled our program to take advantage of OCaml's functional structure.    
+Hence, we have shown that recursive division is optimally fast, because it takes $O(n^2)$ time to produce $n^2$ cell.  Thus, when we made the design decision to implement recursive division over other algorithms such as Prim's, Kruskal's, etc., we did not sacrifice efficiency and simultaneously enabled our program to take advantage of OCaml's functional structure. 
+\tab A natural implementation of the recursive division algorithm is to have \texttt{type cell} be a record that packages relevant variables such as \texttt{pos} (the double indexed position of the lower-left hand corner of the cell in the maze), \texttt{length} (the length of one side of the cell), and booleans for each side of the cell to indicate open (\texttt{true}) or closed (\texttt{false}).  However, if we look at a single side of a cell, we see that it is also the side of another, adjacent cell.  Thus, from the perspective of space efficiency, there is no reason to include this information twice - at least for the process of maze generation.  Therefore, we made the design decision of letting each cell $c$ only keep track of its left and bottom sides (see \texttt{cell.ml}).  The cell above $c$ would keep track of $c$'s top side as its own bottom side and the cell to the right of $c$ would keep track of $c$'s right side as its own left side.  In this fashion, the only sides left untracked are the ones on the outermost boundary of the maze, but these can just all be closed until the algorithm terminates.  Then, two of them will become open for the start and end points of the maze. 
+
+\begin{figure}[H]
+\begin{center}
+\includegraphics[scale=0.7]{structure.jpg}
+\caption{The abstract representation of mazes in our program.  Each color is a different cell.  For example, the green cell is \texttt{\{pos = (n/2, 0); length = n/2; left = true; bottom = false}\}.}
+\end{center}
+\end{figure}
+
+A more subtle benefit of having each side tracked by only one cell becomes apparent during the process of recursive division.  Let's say we have an open side $s$ that is the right side of cell $c$ and the left side of cell $d$.  During the next step of recursive division, $s$ needs to be split into two smaller sides - $s_1$ and $s_2$.  As explained earlier, exactly one of $s_1$, $s_2$ must be open and the other must be closed, and this will be decided randomly.  The cell-dividing algorithm will be recursively called on $c$ and $d$ separately, but we need to make sure that in each call, the same smaller side (either $s_1$ or $s_2$) is chosen as open and the same smaller side is chosen as closed.  If both $c$ and $d$ kept track of $s$, then enforcing such an invariant would be computationally difficult and inefficient.  On the other hand, by letting only $d$ keep track of $s$ as its left side, we avoid this issue entirely, because $c$ will not process $s$ at all.  This was another factor that played into our decision to let each cell only keep track of its left and bottom sides.    
+
+\tab With the structure of a cell set in place, we can then simply let \texttt{type maze} be a \texttt{cell list}.  Initially, the list will just contain a single cell with side length $n$.  In each iteration of recursive division, the algorithm will process a list of cells with side length $k$ and return a list of cells of side length $\frac{k}{2}$.                   
+   
 \subsection{Functions Explained} %% Go through each function in generate and explain what it does/how they interact with each other
 
 \subsection{Rendering Graphics} %% Describe how we display the solution to the maze using the Graphics module
