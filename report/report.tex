@@ -56,12 +56,11 @@ The code is divided into three files:
 \item \texttt{maze.ml} - contains the \textsc{Maze} functor, which provides implementation for maze generation and maze solving based on the \textsc{Cell} module; this file contains the bulk of the project code   
 \end{itemize} 
 
-
 This division was enforced to logically separate the creation of maze modules (\texttt{cell.ml}, \texttt{maze.ml}) from their use (\texttt{main.ml}).  Furthermore, we noted that mazes of different shapes and sizes could be created based on the properties of their cells.  Thus, we packaged the implementation for cells separately from the implementation for mazes; this led us to naturally create a \textsc{Maze} functor that inputed modules of type \textsc{CELL} and outputted modules of type \textsc{MAZE}.
 \tab In \textsc{Maze}, we also render the maze and its solution onto a graphical interface as a side effect of the \texttt{generate} and \texttt{solve} functions.  Initially, we considered factoring all of the drawing functions into a separate module, yet we later decided that there was no need for this extra layer of abstraction, as users do not have much of a reason for creating mazes but not viewing them.     
 
 \subsection{Running the Program} %% Explain how to run the program using ./main.byte
-To run the program, enter \texttt{./main.byte} into the command line.  You will be prompted with
+To run the program, enter \texttt{make} followed by \texttt{./main.byte} into the command line.  You will be prompted with
 
 \begin{flushleft}
 \quad \quad \texttt{\# new maze? (y/n): } 
@@ -107,12 +106,6 @@ Enter '\texttt{y}' for a new maze and  '\texttt{n}' to quit the program.
 \caption{The solution to the above maze.}
 \end{center}
 \end{figure}
-
-
-
-
-
-    
 
 \section{Maze Generation}
 

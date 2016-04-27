@@ -2,4 +2,4 @@
 
 Alex Lin, Melissa Yu
 
-Execute ./main.byte to run program.
+Execute 'make' followed by './main.byte' to run program.
