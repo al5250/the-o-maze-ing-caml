@@ -214,12 +214,12 @@ module Maze (C : CELL) : (MAZE with type cell = C.c) =
             in
             match List.filter (filter_helper path) (get_neighbors m curr_cell) with
             | [] -> 
-              (let path' = backtrack m frontier path in
-              explore m frontier path')
+              let path' = backtrack m frontier path in
+              explore m frontier path'
             | nb -> 
-              (let frontier' = List.fold_left (fun a e -> e :: a) frontier nb in
+              let frontier' = List.fold_left (fun a e -> e :: a) frontier nb in
               let path' = curr_cell :: path in
-              explore m frontier' path')
+              explore m frontier' path'
           end
 
     (* computes the path from the start to the end of a maze *)
@@ -236,4 +236,3 @@ module Maze (C : CELL) : (MAZE with type cell = C.c) =
       solution
     
   end
-  

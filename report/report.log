@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.16 (TeX Live 2015) (preloaded format=pdflatex 2015.5.24)  27 APR 2016 07:08
+This is pdfTeX, Version 3.14159265-2.6-1.40.16 (TeX Live 2015) (preloaded format=pdflatex 2015.5.24)  27 APR 2016 15:54
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -633,13 +633,13 @@ Package Fancyhdr Warning: \headheight is too small (12.0pt):
  We now make it that large for the rest of the document.
  This may cause the page layout to be inconsistent, however.
 
-[2] <img/example.jpg, id=103, 615.29875pt x 637.38126pt>
+[2] <img/example.jpg, id=105, 615.29875pt x 637.38126pt>
 File: img/example.jpg Graphic file (type jpg)
  <use img/example.jpg>
 Package pdftex.def Info: img/example.jpg used on input line 98.
 (pdftex.def)             Requested size: 184.59105pt x 191.21585pt.
 
-<img/solution.jpg, id=105, 615.29875pt x 636.3775pt>
+<img/solution.jpg, id=107, 615.29875pt x 636.3775pt>
 File: img/solution.jpg Graphic file (type jpg)
  <use img/solution.jpg>
 Package pdftex.def Info: img/solution.jpg used on input line 106.
@@ -660,13 +660,13 @@ s been already used, duplicate ignored
 l.123 \tab
            Let's say we want to generate an $n$ by $n$ maze.  The algorithm ...
  <./img/example.jpg> <./img/solution.jpg>]
-<img/gen1.jpg, id=115, 643.40375pt x 242.9075pt>
+<img/gen1.jpg, id=117, 643.40375pt x 242.9075pt>
 File: img/gen1.jpg Graphic file (type jpg)
  <use img/gen1.jpg>
 Package pdftex.def Info: img/gen1.jpg used on input line 127.
 (pdftex.def)             Requested size: 450.37955pt x 170.03407pt.
 
-<img/gen2.jpg, id=116, 654.445pt x 249.93375pt>
+<img/gen2.jpg, id=118, 654.445pt x 249.93375pt>
 File: img/gen2.jpg Graphic file (type jpg)
  <use img/gen2.jpg>
 Package pdftex.def Info: img/gen2.jpg used on input line 137.
@@ -686,7 +686,7 @@ s been already used, duplicate ignored
 l.144 \tab
            One advantage of this algorithm is that it is optimally efficient...
  <./img/gen1.jpg> <./img/gen2.jpg>]
-<img/structure.jpg, id=125, 282.05376pt x 259.97125pt>
+<img/structure.jpg, id=127, 282.05376pt x 259.97125pt>
 File: img/structure.jpg Graphic file (type jpg)
  <use img/structure.jpg>
 Package pdftex.def Info: img/structure.jpg used on input line 170.
@@ -707,7 +707,7 @@ LaTeX Font Warning: Font shape `OMS/cmtt/m/n' undefined
                                                   \fi \fi 
 l.192 \begin{enumerate}
                         <./img/structure.jpg>] [7]
-<img/tree.jpg, id=146, 675.52374pt x 290.08376pt>
+<img/tree.jpg, id=148, 675.52374pt x 290.08376pt>
 File: img/tree.jpg Graphic file (type jpg)
  <use img/tree.jpg>
 Package pdftex.def Info: img/tree.jpg used on input line 220.
@@ -776,10 +776,10 @@ ive/2015/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/local/texli
 ve/2015/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy8.pfb></usr/local/texlive
 /2015/texmf-dist/fonts/type1/public/amsfonts/cm/cmti10.pfb></usr/local/texlive/
 2015/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt10.pfb>
-Output written on report.pdf (10 pages, 311816 bytes).
+Output written on report.pdf (10 pages, 312212 bytes).
 PDF statistics:
- 219 PDF objects out of 1000 (max. 8388607)
- 178 compressed objects within 2 object streams
+ 221 PDF objects out of 1000 (max. 8388607)
+ 180 compressed objects within 2 object streams
  33 named destinations out of 1000 (max. 500000)
  135 words of extra memory for PDF output out of 10000 (max. 10000000)
 
