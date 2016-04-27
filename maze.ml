@@ -184,51 +184,49 @@ module Maze (C : CELL) : (MAZE with type cell = C.c) =
         neighbors := (x-1, y) :: !neighbors;
       !neighbors
 
-    (* backtracks along the current path until a new path is found *)
-    let rec backtrack (m : array_maze) (frontier : positions ref) 
-      (path : positions ref) : unit =
-        match !path with
+    (* backtracks along the current path until a new path is found 
+     * and returns the modified path *)
+    let rec backtrack (m : array_maze) (frontier : positions) 
+      (path : positions) : positions =
+        match path with
         | [] -> raise (Invalid_argument "Backtrack: empty path")
         | curr_cell :: tl ->
-          match !frontier with
+          match frontier with
           | [] -> raise (Invalid_argument "Backtrack: empty frontier")
           | next_cell :: _ -> 
-            if is_neighbor m next_cell curr_cell then ()
-            else 
-              (path := tl; 
-              backtrack m frontier path)
+            if is_neighbor m next_cell curr_cell then path
+            else backtrack m frontier tl
 
     (* keeps exploring/extending the path forward until we hit a dead end *)
-    let rec explore (m : array_maze) (frontier : positions ref) 
-      (path : positions ref) : unit = 
+    let rec explore (m : array_maze) (frontier : positions) 
+      (path : positions) : positions = 
         let n = Array.length m in 
-        match !frontier with
+        match frontier with
         | [] -> raise (Invalid_argument "Explore: empty frontier")
         | curr_cell :: t -> 
-          if curr_cell = (n-1, n-1) then (path := curr_cell :: !path; ())
+          if curr_cell = (n-1, n-1) then curr_cell :: path
           else begin
-            frontier := t;
+            let frontier = t in
             let filter_helper path e = 
-              match !path with
+              match path with
               | [] -> true 
               | hd :: _ -> e <> hd
             in
             match List.filter (filter_helper path) (get_neighbors m curr_cell) with
             | [] -> 
-              (backtrack m frontier path; 
-              explore m frontier path)
+              (let path' = backtrack m frontier path in
+              explore m frontier path')
             | nb -> 
-              (List.iter (fun e -> frontier := e :: !frontier) nb;
-              path := curr_cell :: !path; 
-              explore m frontier path)
+              (let frontier' = List.fold_left (fun a e -> e :: a) frontier nb in
+              let path' = curr_cell :: path in
+              explore m frontier' path')
           end
 
     (* computes the path from the start to the end of a maze *)
     let find_path (m : array_maze) : positions = 
-      let frontier = ref [(0, 0)] in
-      let path = ref [] in
-      explore m frontier path;
-      !path
+      let frontier = [(0, 0)] in
+      let path = [] in
+      explore m frontier path
 
     (* finds the solution to an already rendered maze and draws it *)
     let solve m = 
