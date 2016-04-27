@@ -164,13 +164,13 @@ A more subtle benefit of having each side tracked by only one cell becomes appar
    
 \subsection{Functions Explained} %% Go through each function in generate and explain what it does/how they interact with each other
 
-\subsubsection{Maze}
+The main functions which generate a random maze are found in \texttt{maze.ml}:
 \begin{itemize}
-\item \texttt{initialize} - Creates an empty maze of size $n$, i.e. a single cell at (0,0) with side length $n$, by calling the Cell module \texttt{C}'s generate function.
-\item \texttt{generate} - Main function used for maze generation. Creates a $n$ by $n$ maze of cells by recursively calling the Cell module \texttt{C}'s \texttt{divide} function on the initial cell outputted by \texttt{initialize}, returns the resulting maze as a \texttt{maze: cell list}, and draws the maze as a side effect.
+\item \texttt{initialize} - Creates an empty maze of size $n$, i.e. a single cell at (0, 0) with side $n$, by calling the cell module \texttt{C}'s generate function.
+\item \texttt{generate} - Main function used for maze generation. Creates a $n$ by $n$ maze of cells by recursively calling the cell module \texttt{C}'s \texttt{divide} function on the initial cell returned by \texttt{initialize}. Returns the resulting maze as a \texttt{cell list} and draws the maze as a side effect.
 \end{itemize}
 
-\subsubsection{Cell}
+The functions in \texttt{cell.ml} are recursively called to do the work of actually splitting the cells:
 \begin{itemize}
 \item \texttt{generate} - Creates a cell with the specified position and dimensions, with the bottom and left walls closed by default. 
 \item \texttt{divide} - Divides a single cell into four smaller cells of equal size in two steps. Let's call the original cell $c$. \texttt{divide} does the following: (1) Bisects the bottom and left walls of $c$ to create $c_i$. If the wall being bisected was originally open, \texttt{divide} preserves the perfect maze invariant by calling \texttt{modify}, which chooses one of the two halves of the original wall to remain open (for more detail, see the discussion in 2.1). (2) Randomly sets three of the four inner walls of the divided cell to be open, leaving the remaining one closed.  
@@ -178,13 +178,13 @@ A more subtle benefit of having each side tracked by only one cell becomes appar
 \end{itemize}
 
 \subsection{Rendering Graphics} %% Describe how we display the solution to the maze using the Graphics module
-Once generated, drawing the maze is straightforward. Using the OCaml \texttt{Graphics} module, which includes functions for creating a new graph, drawing a line between points, and rendering text, we simply initialize an empty graphics window and then iterate through all cells in the maze, drawing each one:
+Once generated, drawing the maze is straightforward. Using the OCaml \texttt{Graphics} module, which includes functions for creating a new graph, drawing a line between points, and rendering text, we simply initialize an empty graphics window and then iterate through all cells in the maze, drawing each one. The relevant functions are found in \texttt{maze.ml}:
 
 \begin{itemize}
-\item \texttt{display\_screen} - initializes an empty graphics window with a square maze frame and title
-\item \texttt{draw\_cell} - draws a single cell by checking the left and bottom walls of the cell and drawing a line between the current position, $(x, y)$, and $(x, y + dy)$ if the left wall is open, or $(x + dx, y)$ if the bottom wall is open. $dx$ and $dy$ are the scaled lengths of a cell on the display screen. Note that all positions encoded in a cell assume a cell has side length 1 pixel. When rendering a maze, these positions are scaled by a factor determined by the window and maze size.
-\item \texttt{display\_screen} - iterates through all cells in a maze and calls \texttt{draw\_cell} on each one. Although each iteration of \texttt{draw\_cell} only draws the left and bottom walls of any given cell, iterating through all cells gives us a complete picture, since the top and right walls of any given cell are the bottom and left walls of the adjacent cells, and we have already drawn the outermost four walls of the maze in \texttt{display\_screen}. 
-\item \texttt{draw} - main function for drawing unsolved mazes; calls \texttt{display\_screen} and \texttt{draw\_cell}
+\item \texttt{display\_screen} - Initializes an empty graphics window with a square maze frame and title
+\item \texttt{draw\_cell} - Draws a single cell by checking the left and bottom walls of the cell and drawing a line between the current position, $(x, y)$, and $(x, y + dy)$ if the left wall is open, or $(x + dx, y)$ if the bottom wall is open. $dx$ and $dy$ are the scaled lengths of a cell on the display screen. Note that all positions encoded in a cell assume a cell has side length 1 pixel. When rendering a maze, these positions are scaled by a factor determined by the window and maze size.
+\item \texttt{draw\_maze} - Iterates through all cells in a maze and calls \texttt{draw\_cell} on each one. Although each iteration of \texttt{draw\_cell} only draws the left and bottom walls of any given cell, iterating through all cells renders the complete picture, since the top and right walls of any given cell are the bottom and left walls of the adjacent cells, and we have already drawn the outermost four walls of the maze in \texttt{display\_screen}. 
+\item \texttt{draw} - Main function for drawing unsolved mazes; calls \texttt{display\_screen} and \texttt{draw\_maze}
 \end{itemize} 
 
 \section{Maze Solving} 
@@ -193,11 +193,19 @@ The second part of our program focuses on the solving of mazes (i.e. how to
 \subsection{Recursive-Backtracking Algorithm} %% Explain theory behind recursive backtracking algorithm, how our algorithm executes it, and the design decisions we made
 
 \subsection{Functions Explained} %% Go through each function in solve and explain what it does/how they interact with each other
+To solve the maze, we take advantage of the OCaml \texttt{Array} module, which provides methods for creating n-d matrices and accessing and modifying their elements in place. Two new types, \texttt{array\_cell} and \texttt{array\_maze} are defined in this section to simplify the solution process. Because all cells are the same size after recursive division has concluded, the length parameter becomes redundant, and storing the resulting cells in a matrix allows us to drop the position field as well. Let \texttt{array\_cell} be a four-field record encoding boolean values representing whether each of the four sides of a cell is a wall. Then, the maze is represented by an \texttt{array\_cell array array}. All relevant functions for solving mazes are found in \texttt{maze.ml}:
+
+\begin{itemize}
+\item \texttt{to\_matrix} - Converts a \texttt{cell list} to an \texttt{array\_cell array array} representation. Let the current cell being inserted into the array be $c$, with \texttt{c.pos} = $(x, y)$. Then the corresponding array\_cell in the array representation is found at the index $(x, y)$. For each cell popped from \texttt{maze}, we update the left and bottom side values of the corresponding cell in the matrix, as well as the right and top side values of the 2 adjacent neighbors.
+\item \texttt{is\_neighbor} - Checks whether 2 given cells communicate (i.e., are both adjacent and directly accessible to each other).
+\item \texttt{get\_neighbors} - Returns a list of all communicating cells to the given cell by calling \texttt{is\_neighbor} on the cell's adjacent cells.
+\item \texttt{explore} - Extends the path forward one cell in each iteration, until either hitting a dead end, in which case \texttt{backtrack} is called, or reaching the exit cell in the maze, in which case we exit with the final solution path. Let the frontier be the list of unexplored communicating cells adjacent to our current solution path. In each iteration, we pop 1 element off the frontier and check it against the exit conditions. If the conditions are not met, we add the current cell's communicating neighbors to the frontier, rinse, and repeat.
+\item \texttt{backtrack} - Backtracks one cell along the current solution path until a new path of exploration is found.   \texttt{backtrack} pops cells off the solution path until reaching a cell that communicates with the next element in frontier, gauged by calling \texttt{is\_neighbor}. At this point, the latest new branch of exploration has been reached, and the function exits back to \texttt{explore}. 
+\item \texttt{find\_path} - Finds a solution path for a given \texttt{array\_maze} by initializing \texttt{frontier} and \texttt{path} and calling \texttt{explore}.
+\item \texttt{solve} - Main function used for maze solving. Calls \texttt{to\_matrix}, \texttt{find\_path}, and \texttt{draw\_solution} on the given maze, and returns a list of the cells in the solution path in reverse order (i.e., starting with the last cell).
+\end{itemize}
 
 \subsection{Rendering Graphics} %% Describe how we display the maze using the Graphics module after generating it
-
-
-
-
+Because drawing the maze is a side-effect of generating one (and thus solve maze will never be called without first having drawing maze), rendering the solution simply requires us to draw the solution path on top of the already rendered graphics. Once again, we use the OCaml \texttt{Graphics} module. All of the functionality is contained in the function \texttt{draw\_solution}, which connects the centers of each cell in the solution path with a line segment.
 
 \end{document}
