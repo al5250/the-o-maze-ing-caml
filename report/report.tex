@@ -17,6 +17,8 @@
 \usepackage{float}
 \graphicspath{ {img/} }
 
+\newcommand{\card}[1]{\ensuremath{\left\vert#1\right\vert}}
+
 %% NOTE: Use \texttt{} for code font.  
 
 \begin{document}
@@ -145,7 +147,7 @@ We stop when $2^k = n$, or $k = \log_2n$.  Thus,
 \begin{align*}
 T(n) = n^2 + (1 + 4 + \ldots + 4^{\log_2n-1}) = n^2 + \frac{4^{\log_2n} - 1}{3} = n^2 + \frac{n^2 - 1}{3} = O(n^2)
 \end{align*}
-Hence, we have shown that recursive division is optimally fast, because it takes $O(n^2)$ time to produce $n^2$ cell.  Thus, when we made the design decision to implement recursive division over other algorithms such as Prim's, Kruskal's, etc., we did not sacrifice efficiency and simultaneously enabled our program to take advantage of OCaml's functional structure.
+Hence, we have shown that recursive division is optimally fast, because it takes $O(n^2)$ time to produce $n^2$ cells.  Thus, when we made the design decision to implement recursive division over other algorithms such as Prim's, Kruskal's, etc., we did not sacrifice any efficiency and simultaneously enabled our program to take advantage of OCaml's functional structure.
 
 \subsection{Design \& Implementation}
  
@@ -162,7 +164,20 @@ A more subtle benefit of having each side tracked by only one cell becomes appar
 
 \tab With the structure of a cell set in place, we can then simply let \texttt{type maze} be a \texttt{cell list}.  Initially, the list will just contain a single cell with side length $n$.  In each iteration of recursive division, the algorithm will process a list of cells with side length $k$ and return a list of cells of side length $\frac{k}{2}$.                   
    
-\subsection{Functions Explained} %% Go through each function in generate and explain what it does/how they interact with each other
+\subsection{Functions Explained} 
+Maze generation utilizes functions from both modules of type \textsc{CELL} and modules of type \textsc{MAZE}.  
+
+\subsubsection{Cell}
+\begin{itemize}
+\item \texttt{generate} - Creates a cell with the specified position and dimensions, with the bottom and left sides closed by default. 
+\item \texttt{divide} - Divides a single cell into four smaller cells of equal size in two steps. Let's call the original cell $c$. \texttt{divide} does the following: 
+\begin{enumerate}
+\item Bisects the bottom and left sides of $c$ to create $c_i$. If the side being bisected was originally open, \texttt{divide} preserves the perfect maze invariant by calling \texttt{modify}, which chooses one of the two halves of the original side to remain open (for more detail, see the discussion in 2.1). 
+\item Randomly sets three of the four inner sides of the divided cell to be open, leaving the remaining one closed.  
+\end{enumerate}
+
+\item \texttt{modify} - Randomly chooses one of two input cells to apply the specified function \texttt{f} to. 
+\end{itemize}
 
 \subsubsection{Maze}
 \begin{itemize}
@@ -170,12 +185,7 @@ A more subtle benefit of having each side tracked by only one cell becomes appar
 \item \texttt{generate} - Main function used for maze generation. Creates a $n$ by $n$ maze of cells by recursively calling the Cell module \texttt{C}'s \texttt{divide} function on the initial cell outputted by \texttt{initialize}, returns the resulting maze as a \texttt{maze: cell list}, and draws the maze as a side effect.
 \end{itemize}
 
-\subsubsection{Cell}
-\begin{itemize}
-\item \texttt{generate} - Creates a cell with the specified position and dimensions, with the bottom and left walls closed by default. 
-\item \texttt{divide} - Divides a single cell into four smaller cells of equal size in two steps. Let's call the original cell $c$. \texttt{divide} does the following: (1) Bisects the bottom and left walls of $c$ to create $c_i$. If the wall being bisected was originally open, \texttt{divide} preserves the perfect maze invariant by calling \texttt{modify}, which chooses one of the two halves of the original wall to remain open (for more detail, see the discussion in 2.1). (2) Randomly sets three of the four inner walls of the divided cell to be open, leaving the remaining one closed.  
-\item \texttt{modify} - Randomly chooses one of two input cells to apply the specified function \texttt{f} to. 
-\end{itemize}
+
 
 \subsection{Rendering Graphics} %% Describe how we display the solution to the maze using the Graphics module
 Once generated, drawing the maze is straightforward. Using the OCaml \texttt{Graphics} module, which includes functions for creating a new graph, drawing a line between points, and rendering text, we simply initialize an empty graphics window and then iterate through all cells in the maze, drawing each one:
@@ -188,9 +198,23 @@ Once generated, drawing the maze is straightforward. Using the OCaml \texttt{Gra
 \end{itemize} 
 
 \section{Maze Solving} 
-The second part of our program focuses on the solving of mazes (i.e. how to 
+The second part of our program focuses on the solving of mazes (i.e. how to find a set of cells that give us a legal path from the starting point of the maze $(0, 0)$ to the ending point $(n, n)$, where $n$ is the dimension of the maze).  Again, we chose to implement a recursive algorithm that is "OCaml-friendly".    
 
 \subsection{Recursive-Backtracking Algorithm} %% Explain theory behind recursive backtracking algorithm, how our algorithm executes it, and the design decisions we made
+The recursive backtracking algorithm is essentially a variant of Depth-First Search (DFS) applied to mazes.  Conceptually, it works by going deeper and deeper along a random path in the maze until it hits a dead end.  At this point, the algorithm backtracks along the current path of exploration until it finds another path to explore.  The algorithm terminates when we reach the final cell, situated at the position $(n - 1, n - 1)$. 
+
+\tab Envisioning the maze as a graph helps us see why recursive backtracking - though simple and often implemented by maze-solving 3-year-olds - is very efficient.  Let each cell in the maze be represented by a vertex.  Two vertices are joined by an edge if and only if they are adjacent and there is an open side between them.  The perfect maze invariant necessitates the existence of one and only one path from any cell to any other cell in the maze.  Hence, the graph representation of the maze must be acyclic.  Furthermore, the graph must be connected, because every cell is accessible from every other cell.  This means that any perfect maze, being connected and acyclic, is a tree.                  
+
+\begin{figure}[H]
+\begin{center}
+\includegraphics[scale=0.7]{tree.jpg}
+\caption{An example of the tree representation of a perfect maze.  The goal is to find a path from the red vertex to the blue vertex.}
+\end{center}
+\end{figure}
+
+Thus, running recursive backtracking on a maze is equivalent to running DFS on a tree.  DFS has an asymptotic running time of $O(\card{V})$ for trees - where $\card{V}$ is the number of vertices - and is optimally efficient for finding a path between two vertices.  This means that recursive backtracking is also optimally efficient for maze solving (at least in an asymptotic sense).  To find the solution to a maze of $n^2$ cells, the algorithm will take $O(n^2)$-time.  Thus, our choice to implement this algorithm is supported by the fact that 1) it is efficient and 2) it is recursive and works well with OCaml.      
+
+\subsection{Design \& Implementation}
 
 \subsection{Functions Explained} %% Go through each function in solve and explain what it does/how they interact with each other
 
