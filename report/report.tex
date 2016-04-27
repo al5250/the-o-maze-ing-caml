@@ -243,6 +243,6 @@ To solve the maze, we take advantage of the OCaml \texttt{Array} module, which p
 \end{itemize}
 
 \subsection{Rendering Graphics} %% Describe how we display the maze using the Graphics module after generating it
-Because drawing the maze is a side-effect of generating one (and thus solve maze will never be called without first having drawing maze), rendering the solution simply requires us to draw the solution path on top of the already rendered graphics. Once again, we use the OCaml \texttt{Graphics} module. All of the functionality is contained in the function \texttt{draw\_solution}, which connects the centers of each cell in the solution path with a line segment.
+Because drawing the maze is a side-effect of generating one (and thus solve maze will never be called without first having drawing maze), rendering the solution simply requires us to draw the solution path on top of the already rendered graphics. Once again, we use the OCaml \texttt{Graphics} module. All of the functionality is contained in the function \texttt{draw\_solution}, which connects the centers of successive cells in the solution path with line segments.
 
 \end{document}
