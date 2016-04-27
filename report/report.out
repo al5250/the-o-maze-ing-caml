@@ -1,0 +1,13 @@
+\BOOKMARK [1][-]{section.1}{Overview}{}% 1
+\BOOKMARK [2][-]{subsection.1.1}{Code Structure}{section.1}% 2
+\BOOKMARK [2][-]{subsection.1.2}{Running the Program}{section.1}% 3
+\BOOKMARK [1][-]{section.2}{Maze Generation}{}% 4
+\BOOKMARK [2][-]{subsection.2.1}{Recursive-Division Algorithm}{section.2}% 5
+\BOOKMARK [2][-]{subsection.2.2}{Design \046 Implementation}{section.2}% 6
+\BOOKMARK [2][-]{subsection.2.3}{Functions Explained}{section.2}% 7
+\BOOKMARK [2][-]{subsection.2.4}{Rendering Graphics}{section.2}% 8
+\BOOKMARK [1][-]{section.3}{Maze Solving}{}% 9
+\BOOKMARK [2][-]{subsection.3.1}{Recursive-Backtracking Algorithm}{section.3}% 10
+\BOOKMARK [2][-]{subsection.3.2}{Design \046 Implementation}{section.3}% 11
+\BOOKMARK [2][-]{subsection.3.3}{Functions Explained}{section.3}% 12
+\BOOKMARK [2][-]{subsection.3.4}{Rendering Graphics}{section.3}% 13

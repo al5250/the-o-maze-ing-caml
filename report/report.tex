@@ -3,6 +3,14 @@
 \usepackage{amsfonts}
 \usepackage[margin=1in]{geometry}
 \usepackage{fancyhdr}
+\usepackage[utf8]{inputenc}
+\usepackage{hyperref}
+\usepackage{color}
+\hypersetup{
+    colorlinks=true, % make the links colored
+    linkcolor=black, % color TOC links in blue
+    linktoc=all % 'all' will create links for everything in the TOC
+}
 \newcommand{\tab}{\par \qquad}
 \newenvironment{proof}{ {\it Proof.}}{\hfill\rule{2mm}{2mm}}
 \pagestyle{fancy}
@@ -33,6 +41,9 @@
 % Brief summary here
 The \textit{O-Maze-ing Caml} is an OCaml-based application that randomly generates mazes and computes the solutions to them.  The program also has graphical capabilities for rendering generated mazes onto the user's screen.  In designing this project, we intentionally employed recursive algorithms to take advantage of OCaml's functional paradigm.  The code can be found at https://github.com/al5250/the-o-maze-ing-caml.  
 
+\tableofcontents
+
+\newpage
 \section{Overview}
 
 We begin with a high-level description of our project before delving into the specific details within the code files.  Section 2 address the Maze Generation portion of our program, while Section 3 focuses on Maze Solving.  
@@ -65,29 +76,13 @@ Enter '\texttt{y}' for yes and you will see
 
 Entering the number $k$ will prompt the program to randomly generate a maze of size $2^k$ by $2^k$ cells.  
 
-\begin{figure}[H]
-\begin{center}
-\includegraphics[scale=0.32]{example.jpg}
-\caption{An example of a randomly generated $2^4$ x $2^4$ maze.}
-\end{center}
-\end{figure}
-
 After the maze renders, you will see 
 
 \begin{flushleft}
 \quad \quad \texttt{\# see solution? (y/n):}
 \end{flushleft}
 
- 
 Enter '\texttt{y}' for yes and you will see the solution to your randomly generated maze drawn in red.
-
-\begin{figure}[H]
-\begin{center}
-\includegraphics[scale=0.32]{solution.jpg}
-\caption{The solution to the above maze.}
-\end{center}
-\end{figure}
-
 
  The program will then loop back to the beginning with 
 
@@ -95,8 +90,26 @@ Enter '\texttt{y}' for yes and you will see the solution to your randomly genera
 \quad \quad \texttt{\# new maze? (y/n): } 
 \end{flushleft}
 
-
 Enter '\texttt{y}' for a new maze and  '\texttt{n}' to quit the program.
+
+\newpage
+\begin{figure}[H]
+\begin{center}
+\includegraphics[scale=0.3]{example.jpg}
+\caption{An example of a randomly generated $2^4$ x $2^4$ maze.}
+\end{center}
+\end{figure}
+
+
+\begin{figure}[H]
+\begin{center}
+\includegraphics[scale=0.3]{solution.jpg}
+\caption{The solution to the above maze.}
+\end{center}
+\end{figure}
+
+
+
 
 
     
@@ -212,6 +225,9 @@ The recursive backtracking algorithm is essentially a variant of Depth-First Sea
 Thus, running recursive backtracking on a maze is equivalent to running DFS on a tree.  DFS has an asymptotic running time of $O(\card{V})$ for trees - where $\card{V}$ is the number of vertices - and is optimally efficient for finding a path between two vertices.  This means that recursive backtracking is also optimally efficient for maze solving (at least in an asymptotic sense).  To find the solution to a maze of $n^2$ cells, the algorithm will take $O(n^2)$-time.  Thus, our choice to implement this algorithm is supported by the fact that 1) it is efficient and 2) it is recursive and works well with OCaml.      
 
 \subsection{Design \& Implementation}
+In order to implement recursive backtracking/DFS efficiently, we needed to make sure that each cell had constant time access to each of its neighbors.  Note that this is not possible for \texttt{type maze}, because each \texttt{type cell} only keeps track of itself and the state of the its left and bottom sides.  Thus, we needed a new data structure to represent the maze.  We chose to use an array, because mazes themselves are already set up like arrays.  Furthermore, to move from a cell $(i, j)$ to an adjacent cell, we can simply increment or decrement $i$ or $j$ by 1, which can be done in constant time.   
+\tab Our new representation of a maze cell is called \texttt{type array\_cell} and just keeps track of four booleans to indicate which of the four sides are open/closed.  Then, a \texttt{type array\_maze} is just a two-dimensional array of \texttt{type array\_cell}'s.  The position of each cell in the maze is simply the double index of the corresponding \texttt{array\_cell}.  
+\tab Let $\texttt{m}$ be an \texttt{array\_maze} with dimension $n$.    We implement recursive backtracking by starting from \texttt{m.0.0} and ending with a path to \texttt{m.(n-1).(n-1)}.  We use two stacks (known in OCaml as \texttt{lists}) to accomplish this goal.  The first stack is called \texttt{frontier}.  It is a set of unexplored cells that are adjacent to/accessible from currently explored cells.  The second stack is called \texttt{path}.  It is a set of adjacent cells that incrementally build the solution to the maze from $(0, 0)$ to $(n-1, n-1)$.  When the program terminates, \texttt{path} will be returned.  Initially, only $(0, 0)$ is in \texttt{frontier} and \texttt{path} is empty.  During the path exploration phase of the algorithm, cells will be repeatedly popped off of \texttt{frontier} and placed in \texttt{path}.  If we hit a dead end and need to backtrack, cells will be popped off of \texttt{path} until we arrive at a cell that is adjacent to the next cell in \texttt{frontier}, so that we can start a new path of exploration.  Section 3.3 gives further details on these functions.  We chose to use this two-stack method, because it allows us to process each cell in the DFS algorithm in constant time.                          
 
 \subsection{Functions Explained} %% Go through each function in solve and explain what it does/how they interact with each other
 To solve the maze, we take advantage of the OCaml \texttt{Array} module, which provides methods for creating n-d matrices and accessing and modifying their elements in place. Two new types, \texttt{array\_cell} and \texttt{array\_maze} are defined in this section to simplify the solution process. Because all cells are the same size after recursive division has concluded, the length parameter becomes redundant, and storing the resulting cells in a matrix allows us to drop the position field as well. Let \texttt{array\_cell} be a four-field record encoding boolean values representing whether each of the four sides of a cell is a wall. Then, the maze is represented by an \texttt{array\_cell array array}. All relevant functions for solving mazes are found in \texttt{maze.ml}:

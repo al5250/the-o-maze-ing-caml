@@ -1,0 +1,13 @@
+\contentsline {section}{\numberline {1}Overview}{2}{section.1}
+\contentsline {subsection}{\numberline {1.1}Code Structure}{2}{subsection.1.1}
+\contentsline {subsection}{\numberline {1.2}Running the Program}{2}{subsection.1.2}
+\contentsline {section}{\numberline {2}Maze Generation}{3}{section.2}
+\contentsline {subsection}{\numberline {2.1}Recursive-Division Algorithm}{3}{subsection.2.1}
+\contentsline {subsection}{\numberline {2.2}Design \& Implementation}{5}{subsection.2.2}
+\contentsline {subsection}{\numberline {2.3}Functions Explained}{6}{subsection.2.3}
+\contentsline {subsection}{\numberline {2.4}Rendering Graphics}{7}{subsection.2.4}
+\contentsline {section}{\numberline {3}Maze Solving}{7}{section.3}
+\contentsline {subsection}{\numberline {3.1}Recursive-Backtracking Algorithm}{7}{subsection.3.1}
+\contentsline {subsection}{\numberline {3.2}Design \& Implementation}{8}{subsection.3.2}
+\contentsline {subsection}{\numberline {3.3}Functions Explained}{9}{subsection.3.3}
+\contentsline {subsection}{\numberline {3.4}Rendering Graphics}{10}{subsection.3.4}
